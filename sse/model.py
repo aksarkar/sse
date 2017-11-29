@@ -1,8 +1,8 @@
 """Sum of single effects regression for Gaussian model
 
 """
+import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import scipy.stats as spst
 
 class GaussianSSE():
@@ -109,10 +109,11 @@ class GaussianSSE():
     fig, ax = plt.subplots(self.pip.shape[0], 1)
     fig.set_size_inches(6, 8)
     for i, a in enumerate(ax):
-      a.plot(np.arange(self.pip.shape[1]), self.pip[i])
+      a.scatter(np.arange(self.pip.shape[1]), self.pip[i])
       a.set_xlabel('')
       a.set_ylabel('PIP {}'.format(i))
-      a.set_x_ticks([])
+      a.set_yticks([0, .5, 1])
+      a.set_xticks([])
     ax[-1].set_xlabel('Genetic variants')
     return plt.gcf()
 

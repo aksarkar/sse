@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2017-11-29 Wed 18:36 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fine mapping evaluation</title>
+<meta name="generator" content="Org mode">
+<meta name="author" content="Abhishek Sarkar">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.7/cosmo/bootstrap.min.css" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="https://www.pirilampo.org/styles/readtheorg/css/htmlize.css"/>
+<style type="text/css">body {width: 60em; margin:auto} pre.src {overflow:auto}</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2017 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Fine mapping evaluation</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgea46a9b">Idealized simulation</a></li>
+<li><a href="#orgf743b3b">Realistic simulation</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgea46a9b" class="outline-2">
+<h2 id="orgea46a9b">Idealized simulation</h2>
+<div class="outline-text-2" id="text-orgea46a9b">
+<p>
+<b>Sanity check:</b> Simulate from a linear model without LD:
+</p>
+
+<p>
+\[ f_j \sim U(0.01, 0.5) \]
+\[ x_{ij} \sim Binomial(2, f_j) \]
+\[ \beta_j \mid z_j \sim N(0, 1) \]
+\[ y \sim N(X \beta, \frac{1}{h^2}\left(V[X\beta] - 1 \right)) \]
+</p>
+
+<div class="org-src-container">
+<pre class="src src-ipython" id="org983a490"><span class="org-keyword">with</span> sse.simulation.simulation(p=1000, pve=0.15, annotation_params=[(10, 1)], seed=0) <span class="org-keyword">as</span> s:
+  <span class="org-variable-name">x</span>, <span class="org-variable-name">y</span> = s.sample_gaussian(n=500)
+  <span class="org-variable-name">x</span> = x.astype(<span class="org-string">'float32'</span>)
+  <span class="org-variable-name">y</span> = y.reshape(-1, 1).astype(<span class="org-string">'float32'</span>)
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-ipython" id="org2160240"><span class="org-variable-name">m</span> = sse.model.GaussianSSE().fit(x, y, num_effects=10, max_epochs=10)
+pd.DataFrame(m.trace, columns=[<span class="org-string">'elbo'</span>, <span class="org-string">'error'</span>, <span class="org-string">'kl_z'</span>, <span class="org-string">'kl_b'</span>])
+</pre>
+</div>
+
+<pre class="example">
+        elbo        error       kl_z       kl_b
+0 -1449.638828 -1401.565700  18.646638  29.426490
+1 -1449.405263 -1402.241986  17.744773  29.418504
+2 -1449.400790 -1402.299415  17.687170  29.414205
+3 -1449.400519 -1402.297357  17.689199  29.413963
+4 -1449.400478 -1402.294946  17.691399  29.414133
+</pre>
+
+<div class="org-src-container">
+<pre class="src src-ipython">m.plot(<span class="org-string">'idealized-fit.png'</span>)
+</pre>
+</div>
+
+
+<div class="figure">
+<p><img src="idealized-fit.png" alt="idealized-fit.png">
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf743b3b" class="outline-2">
+<h2 id="orgf743b3b">Realistic simulation</h2>
+<div class="outline-text-2" id="text-orgf743b3b">
+<p>
+<b>Sanity check:</b> Use <a href="http://www.geuvadis.org/web/geuvadis/rnaseq-project">GEUVADIS genotypes</a>, put only one causal variant.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-ipython"><span class="org-variable-name">gene_info</span> = pd.read_table(<span class="org-string">'/home/aksarkar/projects/singlecell-qtl/data/scqtl-genes.txt.gz'</span>).set_index(<span class="org-string">'gene'</span>)
+gene_info.head()
+</pre>
+</div>
+
+<pre class="example">
+                chr      start        end      name strand      source
+gene                                                                    
+ENSG00000000003   hsX   99883667   99894988    TSPAN6      -  H. sapiens
+ENSG00000000005   hsX   99839799   99854882      TNMD      +  H. sapiens
+ENSG00000000419  hs20   49551404   49575092      DPM1      -  H. sapiens
+ENSG00000000457   hs1  169818772  169863408     SCYL3      -  H. sapiens
+ENSG00000000460   hs1  169631245  169823221  C1orf112      +  H. sapiens
+</pre>
+
+<p>
+Take a subset of SNPs from a typical <i>cis</i>-window (100kb rather than 1MB)
+</p>
+
+<div class="org-src-container">
+<pre class="src src-ipython"><span class="org-keyword">def</span> <span class="org-function-name">read_genotypes</span>(chrom, start, end):
+  <span class="org-variable-name">vcf</span> = <span class="org-string">"/project/compbio/geuvadis/genotypes/GEUVADIS.chr{}.PH1PH2_465.IMPFRQFILT_BIALLELIC_PH.annotv2.genotypes.vcf.gz"</span>.<span class="org-builtin">format</span>(chrom)
+  <span class="org-variable-name">x</span> = []
+  <span class="org-keyword">for</span> record <span class="org-keyword">in</span> tabix.<span class="org-builtin">open</span>(vcf).query(<span class="org-builtin">str</span>(chrom), start, end):
+    <span class="org-variable-name">dose</span> = [_.split(<span class="org-string">':'</span>)[2] <span class="org-keyword">if</span> _ != <span class="org-string">'.'</span> <span class="org-keyword">else</span> -1 <span class="org-keyword">for</span> _ <span class="org-keyword">in</span> record[9:]]
+    x.append([<span class="org-builtin">float</span>(_) <span class="org-keyword">if</span> _ != <span class="org-string">'.'</span> <span class="org-keyword">else</span> -1 <span class="org-keyword">for</span> _ <span class="org-keyword">in</span> dose])
+  <span class="org-keyword">return</span> np.array(x)
+</pre>
+</div>
+
+<p>
+<b>Open problem:</b> setting PVE in the simulation. If the true causal variant is
+rare (minimum MAF we consider is 0.01), then it's undetectable even with
+unrealisically large PVE.
+</p>
+
+<p>
+To get around this, use our previous simulation generating epigenomic
+annotations to generate a "high MAF" annotation, and draw the causal variant
+from SNPs with that annotation.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-ipython"><span class="org-variable-name">x</span> = read_genotypes(1, gene_info.loc[<span class="org-string">'ENSG00000000457'</span>, <span class="org-string">'start'</span>], gene_info.loc[<span class="org-string">'ENSG00000000457'</span>, <span class="org-string">'start'</span>] + <span class="org-builtin">int</span>(1e5)).T
+<span class="org-variable-name">x</span> = np.ma.masked_equal(x, -1)
+<span class="org-comment-delimiter"># </span><span class="org-comment">We will treat the dosages as the ground truth, so this is fine</span>
+<span class="org-variable-name">x</span> = x.filled(x.mean())
+
+<span class="org-keyword">with</span> sse.simulation.simulation(p=x.shape[1], pve=0.15, annotation_params=[(1, 1)], seed=1) <span class="org-keyword">as</span> s:
+  s.estimate_mafs(x)
+  s.load_annotations((s.maf &gt; 0.25).astype(np.<span class="org-builtin">int</span>))
+  s.sample_effects(pve=0.5, annotation_params=[(0, 1), (1, 1)], permute=<span class="org-constant">True</span>)
+  <span class="org-variable-name">y</span> = s.compute_liabilities(x).reshape(-1, 1)
+
+<span class="org-variable-name">x</span> -= x.mean()
+<span class="org-variable-name">y</span> -= y.mean()
+x.shape, y.shape
+</pre>
+</div>
+
+<pre class="example">
+((465, 1335), (465, 1))
+
+</pre>
+
+<div class="org-src-container">
+<pre class="src src-ipython"><span class="org-variable-name">m</span> = sse.model.GaussianSSE().fit(x, y, num_effects=10, max_epochs=100)
+pd.DataFrame(m.trace)
+</pre>
+</div>
+
+<pre class="example">
+           0           1          2          3
+0  -243.297418 -206.074437  13.780945  23.442036
+1  -238.482816 -199.593369  13.807836  25.081611
+2  -236.849831 -196.123641  14.316868  26.409321
+3  -236.521158 -195.533397  14.071157  26.916605
+4  -236.355306 -195.802415  13.486015  27.066877
+5  -236.134515 -196.638972  12.389837  27.105706
+6  -235.622103 -197.835311  10.593263  27.193529
+7  -234.599376 -197.782399   9.217223  27.599755
+8  -233.616040 -196.573085   8.813495  28.229460
+9  -233.018004 -195.708568   8.635321  28.674116
+10 -232.690419 -195.237163   8.556786  28.896470
+11 -232.501901 -195.004927   8.532126  28.964848
+12 -232.373368 -194.897389   8.531252  28.944727
+13 -232.272925 -194.854264   8.539353  28.879308
+14 -232.189758 -194.846584   8.549135  28.794039
+15 -232.119903 -194.859435   8.557237  28.703231
+16 -232.061258 -194.884363   8.562388  28.614507
+17 -232.012167 -194.916186   8.564393  28.531588
+18 -231.971124 -194.951561   8.563559  28.456004
+19 -231.936762 -194.988293   8.560373  28.388096
+20 -231.907885 -195.024937   8.555340  28.327608
+21 -231.883480 -195.060560   8.548912  28.274009
+22 -231.862713 -195.094574   8.541471  28.226667
+23 -231.844906 -195.126621   8.533338  28.184947
+24 -231.829520 -195.156493   8.524781  28.148246
+25 -231.816130 -195.184085   8.516031  28.116014
+26 -231.804404 -195.209361   8.507290  28.087753
+27 -231.794084 -195.232336   8.498731  28.063017
+28 -231.784974 -195.253065   8.490504  28.041405
+29 -231.776924 -195.271644   8.482731  28.022549
+..         ...         ...        ...        ...
+61 -231.717884 -195.457432   8.411037  27.849415
+62 -231.717528 -195.459512   8.410423  27.847593
+63 -231.717190 -195.461513   8.409835  27.845842
+64 -231.716870 -195.463438   8.409271  27.844160
+65 -231.716565 -195.465291   8.408731  27.842543
+66 -231.716277 -195.467076   8.408214  27.840987
+67 -231.716002 -195.468796   8.407718  27.839488
+68 -231.715741 -195.470455   8.407241  27.838045
+69 -231.715493 -195.472055   8.406784  27.836654
+70 -231.715256 -195.473599   8.406345  27.835313
+71 -231.715031 -195.475090   8.405922  27.834019
+72 -231.714817 -195.476530   8.405516  27.832771
+73 -231.714612 -195.477921   8.405125  27.831566
+74 -231.714417 -195.479265   8.404749  27.830403
+75 -231.714230 -195.480564   8.404386  27.829280
+76 -231.714052 -195.481819   8.404038  27.828195
+77 -231.713882 -195.483033   8.403702  27.827147
+78 -231.713720 -195.484206   8.403378  27.826135
+79 -231.713564 -195.485340   8.403067  27.825157
+80 -231.713416 -195.486437   8.402767  27.824212
+81 -231.713274 -195.487497   8.402478  27.823299
+82 -231.713138 -195.488522   8.402199  27.822417
+83 -231.713008 -195.489512   8.401931  27.821565
+84 -231.712883 -195.490469   8.401672  27.820742
+85 -231.712764 -195.491394   8.401423  27.819948
+86 -231.712650 -195.492286   8.401183  27.819181
+87 -231.712541 -195.493148   8.400952  27.818441
+88 -231.712436 -195.493978   8.400730  27.817728
+89 -231.712336 -195.494779   8.400516  27.817041
+90 -231.712239 -195.495551   8.400310  27.816379
+
+[91 rows x 4 columns]
+</pre>
+
+<div class="org-src-container">
+<pre class="src src-ipython">m.plot(<span class="org-string">'SCYL3.png'</span>)
+</pre>
+</div>
+
+
+<div class="figure">
+<p><img src="SCYL3.png" alt="SCYL3.png">
+</p>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Abhishek Sarkar</p>
+<p class="date">Created: 2017-11-29 Wed 18:36</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
