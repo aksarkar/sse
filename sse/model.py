@@ -58,15 +58,15 @@ class GaussianSSE():
     """
     num_samples, num_snps = x.shape
 
-    self.x = x
-    self.y = y
+    self.x = x - x.mean(axis=0)
+    self.y = y - y.mean()
 
     if prior_prob is None:
       prior_prob = np.ones((num_snps, 1)) / num_snps
     if effect_var is None:
       effect_var = 1
     if residual_var is None:
-      residual_var = y.var()
+      residual_var = self.y.var()
 
     self.prior_prob = prior_prob
     self.effect_var = effect_var
@@ -77,9 +77,9 @@ class GaussianSSE():
     self.mean = np.zeros((num_effects, num_snps))
 
     # Make sure everything is two dimensional to catch numpy broadcasting gotchas
-    self.d = np.einsum('ij,ij->j', x, x).reshape(-1, 1)
-    self.xy = x.T.dot(y)
-    self.xr = np.dot(x, (self.pip * self.mean).T)
+    self.d = np.einsum('ij,ij->j', self.x, self.x).reshape(-1, 1)
+    self.xy = self.x.T.dot(self.y)
+    self.xr = np.dot(self.x, (self.pip * self.mean).T)
 
     # Variational variance depends on a pre-computed quantity
     self.var = (self.effect_var * self.residual_var / (self.effect_var * self.d + 1)).reshape(-1, 1)
@@ -95,7 +95,9 @@ class GaussianSSE():
     raise RuntimeError("Failed to converge")
 
   def predict(self, x):
-    return x.dot((self.pip * self.mean).sum(axis=0))
+    if self.pip is None:
+      raise ValueError("Must fit the model before calling lfsr")
+    return (x - x.mean(axis=0)).dot((self.pip * self.mean).sum(axis=0))
 
   def lfsr(self):
     if self.pip is None:
