@@ -1,0 +1,56 @@
+#+TITLE: PIP calibration
+#+SETUPFILE: setup.org
+
+* Setup                                                            :noexport:
+
+  #+BEGIN_SRC emacs-lisp
+    (org-babel-lob-ingest "/home/aksarkar/.emacs.d/org-templates/library.org")
+  #+END_SRC
+
+  #+RESULTS:
+  : 1
+
+  #+CALL: ipython3(venv="sse") :dir /scratch/midway2/aksarkar/sse
+
+  #+RESULTS:
+  : Submitted batch job 40808452
+
+  #+BEGIN_SRC ipython
+    import glob
+    import pandas as pd
+    import sse
+  #+END_SRC
+
+  #+RESULTS:
+  :RESULTS:
+  :END:
+
+* One causal variant
+
+  #+BEGIN_SRC ipython
+    genotype_files = ["/project/compbio/geuvadis/genotypes/GEUVADIS.chr{}.PH1PH2_465.IMPFRQFILT_BIALLELIC_PH.annotv2.genotypes.vcf.gz".format(i) for i in range(1, 23)]
+  #+END_SRC
+
+  #+RESULTS:
+  :RESULTS:
+  :END:
+
+  #+BEGIN_SRC ipython
+    genes = (pd.read_table('/home/aksarkar/projects/singlecell-qtl/data/scqtl-genes.txt.gz')
+             .set_index('gene')
+             .query('source == "H. sapiens" and chr != "hsX" and chr != "hsY"'))
+  #+END_SRC
+
+  #+RESULTS:
+  :RESULTS:
+  :END:
+
+  #+BEGIN_SRC ipython
+    sse.evaluate.pip_calibration(
+      genes=genes,
+      genotype_files=genotype_files,
+      num_genes=1,
+      num_trials=1,
+      num_effects=10,
+      max_epochs=100)
+  #+END_SRC
