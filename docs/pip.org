@@ -32,7 +32,40 @@
   against other methods:
 
   - [[https://academic.oup.com/bioinformatics/article-lookup/doi/10.1093/bioinformatics/btw018][FINEMAP]] (2016)
-  - [[https://www.biorxiv.org/content/early/2016/03/26/026450][DAP]] (2016)
+    
+  #+BEGIN_SRC ipython :results output
+    !finemap
+  #+END_SRC
+
+  #+RESULTS:
+  :RESULTS:
+  
+  |---------------------------------|
+  | Welcome to FINEMAP v1.1         |
+  |                                 |
+  | (c) 2015 University of Helsinki |
+  |                                 |
+  | Help / Documentation:           |
+  | - ./finemap --help              |
+  | - www.christianbenner.com       |
+  |                                 |
+  | Contact:                        |
+  | - christian.benner@helsinki.fi  |
+  | - matti.pirinen@helsinki.fi     |
+  |---------------------------------|
+  
+  Error: Option '--sss' or '--corr' must be supplied!
+  
+  :END:
+
+  - [[http://www.sciencedirect.com/science/article/pii/S0002929716300957?via%253Dihub][DAP]] (2016)
+
+  #+BEGIN_SRC sh :dir ~/.local/src/dap :eval never-export :exports both
+    git describe --tags
+  #+END_SRC
+
+  #+RESULTS:
+  : v1.0.0
 
   The simulation generative model is as follows:
 
@@ -70,7 +103,7 @@
 * One causal variant
 
   #+BEGIN_SRC ipython
-    sse.evaluate.pip_calibration(
+    one_causal = sse.evaluate.pip_calibration(
       genes=genes,
       genotype_files=genotype_files,
       num_genes=1,

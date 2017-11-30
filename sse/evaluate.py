@@ -16,8 +16,7 @@ def _call_n(x, f, n, *args, **kwargs):
   """
   return [f(i, x, *args, **kwargs) for i in range(n)]
 
-def _pip_calibration(trial, row, genotype_files, num_causal=1, window=int(1e5), posterior_prob=0.9, **kwargs):
-  """Single simulation trial"""
+def _generate_pheno(trial, row, genotype_files, num_causal, window):
   if row['strand'] == '+':
     start = row['start'] - window
     end = row['start']
@@ -35,8 +34,15 @@ def _pip_calibration(trial, row, genotype_files, num_causal=1, window=int(1e5), 
   s.sample_effects(pve=0.15, annotation_params=[(0, 1), (num_causal, 1)], permute=True)
   y = s.compute_liabilities(x).reshape(-1, 1)
 
+  return x, y
+
+def _pip_calibration(trial, row, genotype_files, num_causal=1, window=int(1e5), **kwargs):
+  """Single simulation trial"""
+  x, y = _generate_pheno(trial, row, genotype_files, num_causal=1, window=int(1e5))
   m = sse.model.GaussianSSE().fit(x, y, **kwargs)
-  return m.pip.sum(axis=0).max()
+  corr = [m.pip_df.agg(np.sum, axis=1).corr(other(x, y)['pip'], method='spearman').apply(pd.Series)
+          for other in sse.wrapper.methods]
+  return pd.DataFrame(corr)
 
 def pip_calibration(genes, genotype_files, num_genes=100, num_trials=10, num_causal=1, **kwargs):
   """Evaluate the calibration of PIP

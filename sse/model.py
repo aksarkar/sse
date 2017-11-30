@@ -3,6 +3,7 @@
 """
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import scipy.stats as spst
 
 class GaussianSSE():
@@ -99,6 +100,14 @@ class GaussianSSE():
       raise ValueError("Must fit the model before calling lfsr")
     return (x - x.mean(axis=0)).dot((self.pip * self.mean).sum(axis=0))
 
+  @property
+  def pip_df(self):
+    return pd.DataFrame(
+      self.pip.T,
+      index=['snp{}'.format(i) for i in range(self.pip.shape[1])],
+      columns=['effect{}'.format(i) for i in range(self.pip.shape[0])])
+
+  @property
   def lfsr(self):
     if self.pip is None:
       raise ValueError("Must fit the model before calling lfsr")
@@ -119,3 +128,11 @@ class GaussianSSE():
     ax[-1].set_xlabel('Genetic variants')
     return plt.gcf()
 
+def LinearModel(x, y):
+  """Return univariate z-scores"""
+  var = np.einsum('ij,ij->j', x, x).reshape(-1, 1) + 1e-8
+  beta = x.T.dot(y) / var
+  s = (np.square(y).sum() - np.square(beta) * var) / (x.shape[0] - 1)
+  se = np.sqrt(s / var)
+  z = np.square(beta / se)
+  return z

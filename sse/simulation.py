@@ -253,7 +253,7 @@ class Simulation:
         x -= x.mean(axis=0)
         y = self.compute_liabilities(x)
         y -= y.mean(axis=0)
-        return x, y
+        return x, y.reshape(-1, 1)
 
     def sample_ascertained_probit(self, n, K, P, batch_size=1000):
         """Return matrix of genotypes and vector of phenotypes.
