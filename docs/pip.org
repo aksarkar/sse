@@ -15,6 +15,8 @@
   #+RESULTS:
   : Submitted batch job 40808452
 
+* Introduction
+
   #+BEGIN_SRC ipython
     import glob
     import pandas as pd
@@ -25,15 +27,16 @@
   :RESULTS:
   :END:
 
-* One causal variant
+  Here we evaluate the concordance between posterior inclusion probability (PIP)
+  computed using the Sum of Single Effects (SSE) variational approximation
+  against other methods:
 
-  #+BEGIN_SRC ipython
-    genotype_files = ["/project/compbio/geuvadis/genotypes/GEUVADIS.chr{}.PH1PH2_465.IMPFRQFILT_BIALLELIC_PH.annotv2.genotypes.vcf.gz".format(i) for i in range(1, 23)]
-  #+END_SRC
+  - [[https://academic.oup.com/bioinformatics/article-lookup/doi/10.1093/bioinformatics/btw018][FINEMAP]] (2016)
+  - [[https://www.biorxiv.org/content/early/2016/03/26/026450][DAP]] (2016)
 
-  #+RESULTS:
-  :RESULTS:
-  :END:
+  The simulation generative model is as follows:
+
+  1. Sample a gene on chromosomes 1-22
 
   #+BEGIN_SRC ipython
     genes = (pd.read_table('/home/aksarkar/projects/singlecell-qtl/data/scqtl-genes.txt.gz')
@@ -44,6 +47,27 @@
   #+RESULTS:
   :RESULTS:
   :END:
+
+  2. Extract genotypes of GEUVADIS individuals \(X\) from 100 kilobases
+     upstream (respecting strand) of the gene start (~sse.evaluate.read_vcf~)
+
+  #+BEGIN_SRC ipython
+    genotype_files = ["/project/compbio/geuvadis/genotypes/GEUVADIS.chr{}.PH1PH2_465.IMPFRQFILT_BIALLELIC_PH.annotv2.genotypes.vcf.gz".format(i) for i in range(1, 23)]
+  #+END_SRC
+
+  #+RESULTS:
+  :RESULTS:
+  :END:
+
+  3. [@3] Estimate MAF \(f_j\) from \(X\) (~sse.simulation.Simulation.estimate_maf~)
+  4. Fix PVE at 0.15 (mean /cis/-heritability of gene expression across all
+     genes; Gusev et al 2016, Wheeler et al 2016)
+  5. Sample causal effects from \(\beta_j \sim N(0, 1)\) (~sse.simulation.Simulation.sample_effects~)
+  6. Compute genetic variance \(V_g = \sum_j 2 * f_j * (1 - f_j) \beta_j^2\)
+  7. Compute residual variance \(\sigma^2 = V_g (1 / PVE - 1)\)
+  8. Sample phenotypes from \(y \sim N(X\beta, \sigma^2)\) (~sse.simulation.Simulation.compute_liabilities~)
+
+* One causal variant
 
   #+BEGIN_SRC ipython
     sse.evaluate.pip_calibration(
