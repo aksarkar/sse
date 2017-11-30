@@ -1,0 +1,5 @@
+#+TITLE: Fine mapping using Sum of Single Effects
+
+#+BEGIN_SRC sh
+  pip install -e git+https://www.github.com/aksarkar/sse.git#egg=sse
+#+END_SRC
