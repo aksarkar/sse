@@ -33,7 +33,7 @@ def finemap(x, y, **kwargs):
   z.to_csv('z', sep=' ', header=None)
   ld = pd.DataFrame((x - x.mean(axis=0)) / x.std(axis=0)).corr(method='pearson')
   ld.to_csv('ld', sep=' ', header=None, index=None)
-  p = subprocess.Popen(['finemap', '--sss', '--in-files', 'master.txt'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  p = subprocess.Popen(['finemap', '--sss', '--in-files', 'master.txt', '--prior-std', '1'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   out, err = p.communicate()
   if p.returncode != 0:
     print(str(out, 'utf-8'))
