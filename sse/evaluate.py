@@ -40,11 +40,11 @@ def _pip_calibration(trial, row, genotype_files, num_causal=1, window=int(1e5), 
   """Single simulation trial"""
   x, y = _generate_pheno(trial, row, genotype_files, num_causal=1, window=int(1e5))
   m = sse.model.GaussianSSE().fit(x, y, **kwargs)
-  corr = [m.pip_df.agg(np.sum, axis=1).corr(other(x, y)['pip'], method='spearman').apply(pd.Series)
+  corr = [m.pip_df.agg(np.sum, axis=1).corr(other(x, y)['pip'])
           for other in sse.wrapper.methods]
-  return pd.DataFrame(corr)
+  return pd.Series(corr)
 
-def pip_calibration(genes, genotype_files, num_genes=100, num_trials=10, num_causal=1, **kwargs):
+def pip_calibration(genes, genotype_files, num_genes=100, num_trials=10, num_causal=1, seed=0, **kwargs):
   """Evaluate the calibration of PIP
 
   genes - DataFrame of genes
@@ -54,6 +54,8 @@ def pip_calibration(genes, genotype_files, num_genes=100, num_trials=10, num_cau
   kwargs - keyword arguments to GaussianSSE.fit
 
   """
-  return (genes
-          .sample(num_genes)
-          .apply(_call_n, f=_pip_calibration, n=num_trials, genotype_files=genotype_files, num_causal=num_causal, **kwargs, axis=1))
+  result = (genes
+            .sample(num_genes, random_state=seed)
+            .apply(_call_n, f=_pip_calibration, n=num_trials, genotype_files=genotype_files, num_causal=num_causal, **kwargs, axis=1)
+            .apply(pd.DataFrame))
+  return pd.concat(result.to_dict()).rename(columns={i: f.__name__ for i, f in enumerate(sse.wrapper.methods)})
