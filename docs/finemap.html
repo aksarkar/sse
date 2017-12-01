@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2017-11-29 Wed 18:36 -->
+<!-- 2017-12-01 Fri 16:24 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Fine mapping evaluation</title>
@@ -257,15 +257,15 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgea46a9b">Idealized simulation</a></li>
-<li><a href="#orgf743b3b">Realistic simulation</a></li>
+<li><a href="#org528a6e8">Idealized simulation</a></li>
+<li><a href="#orgd0a36b5">Realistic simulation</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-orgea46a9b" class="outline-2">
-<h2 id="orgea46a9b">Idealized simulation</h2>
-<div class="outline-text-2" id="text-orgea46a9b">
+<div id="outline-container-org528a6e8" class="outline-2">
+<h2 id="org528a6e8">Idealized simulation</h2>
+<div class="outline-text-2" id="text-org528a6e8">
 <p>
 <b>Sanity check:</b> Simulate from a linear model without LD:
 </p>
@@ -278,7 +278,7 @@ for the JavaScript code in this tag.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-ipython" id="org983a490"><span class="org-keyword">with</span> sse.simulation.simulation(p=1000, pve=0.15, annotation_params=[(10, 1)], seed=0) <span class="org-keyword">as</span> s:
+<pre class="src src-ipython" id="org1cb7222"><span class="org-keyword">with</span> sse.simulation.simulation(p=1000, pve=0.15, annotation_params=[(10, 1)], seed=0) <span class="org-keyword">as</span> s:
   <span class="org-variable-name">x</span>, <span class="org-variable-name">y</span> = s.sample_gaussian(n=500)
   <span class="org-variable-name">x</span> = x.astype(<span class="org-string">'float32'</span>)
   <span class="org-variable-name">y</span> = y.reshape(-1, 1).astype(<span class="org-string">'float32'</span>)
@@ -286,7 +286,7 @@ for the JavaScript code in this tag.
 </div>
 
 <div class="org-src-container">
-<pre class="src src-ipython" id="org2160240"><span class="org-variable-name">m</span> = sse.model.GaussianSSE().fit(x, y, num_effects=10, max_epochs=10)
+<pre class="src src-ipython" id="orga48aa26"><span class="org-variable-name">m</span> = sse.model.GaussianSSE().fit(x, y, num_effects=10, max_epochs=10)
 pd.DataFrame(m.trace, columns=[<span class="org-string">'elbo'</span>, <span class="org-string">'error'</span>, <span class="org-string">'kl_z'</span>, <span class="org-string">'kl_b'</span>])
 </pre>
 </div>
@@ -313,9 +313,9 @@ pd.DataFrame(m.trace, columns=[<span class="org-string">'elbo'</span>, <span cla
 </div>
 </div>
 
-<div id="outline-container-orgf743b3b" class="outline-2">
-<h2 id="orgf743b3b">Realistic simulation</h2>
-<div class="outline-text-2" id="text-orgf743b3b">
+<div id="outline-container-orgd0a36b5" class="outline-2">
+<h2 id="orgd0a36b5">Realistic simulation</h2>
+<div class="outline-text-2" id="text-orgd0a36b5">
 <p>
 <b>Sanity check:</b> Use <a href="http://www.geuvadis.org/web/geuvadis/rnaseq-project">GEUVADIS genotypes</a>, put only one causal variant.
 </p>
@@ -474,7 +474,7 @@ pd.DataFrame(m.trace)
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Abhishek Sarkar</p>
-<p class="date">Created: 2017-11-29 Wed 18:36</p>
+<p class="date">Created: 2017-12-01 Fri 16:24</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

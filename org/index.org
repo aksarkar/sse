@@ -1,0 +1,6 @@
+#+TITLE: Sum of Single Effects
+#+SETUPFILE: setup.org
+
+- [[file:pip.org][PIP calibration]]
+- [[file:finemap.org][Fine mapping evaluation]]
+

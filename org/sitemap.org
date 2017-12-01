@@ -1,0 +1,6 @@
+#+TITLE: Sum of Single Effects
+
+- [[file:causal-sets.org][Calibration of causal sets]]
+- [[file:finemap.org][Fine mapping evaluation]]
+- [[file:pip.org][PIP calibration]]
+- [[file:setup.org][setup]]

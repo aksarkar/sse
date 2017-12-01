@@ -13,7 +13,7 @@
   #+CALL: ipython3(venv="sse") :dir /scratch/midway2/aksarkar/sse
 
   #+RESULTS:
-  : Submitted batch job 40808452
+  : Submitted batch job 40864476
 
   #+BEGIN_SRC ipython
     import glob
@@ -80,18 +80,18 @@
 
     #+RESULTS:
     :RESULTS:
-  :END:
+    :END:
 
   2. Extract genotypes of GEUVADIS individuals \(X\) from 100 kilobases
      upstream (respecting strand) of the gene start (~sse.evaluate.read_vcf~)
 
     #+BEGIN_SRC ipython
-    genotype_files = ["/project/compbio/geuvadis/genotypes/GEUVADIS.chr{}.PH1PH2_465.IMPFRQFILT_BIALLELIC_PH.annotv2.genotypes.vcf.gz".format(i) for i in range(1, 23)]
-  #+END_SRC
+      genotype_files = ["/project/compbio/geuvadis/genotypes/GEUVADIS.chr{}.PH1PH2_465.IMPFRQFILT_BIALLELIC_PH.annotv2.genotypes.vcf.gz".format(i) for i in range(1, 23)]
+    #+END_SRC
 
     #+RESULTS:
-  :RESULTS:
-  :END:
+    :RESULTS:
+    :END:
 
   3. [@3] Estimate MAF \(f_j\) from \(X\) (~sse.simulation.Simulation.estimate_maf~)
   4. Fix proportion of variance explained \(h^2 = 0.15\) (mean
@@ -113,23 +113,6 @@
       num_effects=10,
       max_epochs=100)
   #+END_SRC
-
-  #+RESULTS:
-  :RESULTS:
-  #+BEGIN_EXAMPLE
-                          dap   finemap
-    ENSG00000143641 0  0.930396  0.337642
-                    1  0.980494  0.459722
-                    2  0.861345  0.408443
-                    3  0.942649  0.600707
-                    4  0.964242  0.451974
-                    5  0.987285  0.515028
-                    6  0.922429  0.170489
-                    7  0.927789  0.240316
-                    8  0.990509  0.445197
-                    9  0.970566  0.370578
-  #+END_EXAMPLE
-  :END:
 
   #+BEGIN_SRC ipython :ipyfile one-causal-variant-spearman.png
     plt.clf()
