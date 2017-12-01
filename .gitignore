@@ -64,3 +64,5 @@ locate.db
 # Cached datasets (for testing)
 *.pkl
 /TAGS
+
+org/*.png
