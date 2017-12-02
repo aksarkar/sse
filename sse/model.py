@@ -130,9 +130,11 @@ class GaussianSSE():
 
 def LinearModel(x, y):
   """Return univariate z-scores"""
+  x -= x.mean()
+  y -= y.mean()
   var = np.einsum('ij,ij->j', x, x).reshape(-1, 1) + 1e-8
   beta = x.T.dot(y) / var
   s = (np.square(y).sum() - np.square(beta) * var) / (x.shape[0] - 1)
   se = np.sqrt(s / var)
-  z = np.square(beta / se)
+  z = beta / se
   return z
