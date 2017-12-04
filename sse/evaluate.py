@@ -30,15 +30,14 @@ def _generate_pheno(trial, row, genotype_files, num_causal, window):
 
   s = sse.simulation.Simulation(p=x.shape[1], seed=trial)
   s.estimate_mafs(x)
-  s.load_annotations((s.maf > 0.25).astype(np.int))
-  s.sample_effects(pve=0.15, annotation_params=[(0, 1), (num_causal, 1)], permute=True)
+  s.sample_effects(pve=0.15, annotation_params=[(num_causal, 1)], permute=True)
   y = s.compute_liabilities(x).reshape(-1, 1)
 
   return x, y, s
 
 def _pip_calibration(trial, row, genotype_files, num_causal=1, window=int(1e5), **kwargs):
   """Single simulation trial"""
-  x, y, _ = _generate_pheno(trial, row, genotype_files, num_causal=1, window=int(1e5))
+  x, y, _ = _generate_pheno(trial, row, genotype_files, num_causal=num_causal, window=int(1e5))
   m = sse.model.GaussianSSE().fit(x, y, **kwargs)
   corr = [m.pip_df.agg(np.sum, axis=1).corr(other(x, y)['pip'])
           for other in sse.wrapper.methods]
