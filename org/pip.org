@@ -14,7 +14,7 @@
   #+CALL: ipython3(mem="4G", venv="sse") :dir /scratch/midway2/aksarkar/sse
 
   #+RESULTS:
-  : Submitted batch job 40913029
+  : Submitted batch job 40913372
 
   #+BEGIN_SRC ipython
     import colorcet
@@ -39,7 +39,7 @@
     between groups of samples) and \(\omega = 1\) (matching the
     simulation). (~sse.wrapper.dap~)
 
-  The simulation generative model is as follows:
+  The simulation generative model is as follows (~sse.evaluate._pip_calibration~):
 
   1. Sample a gene on chromosomes 1-22
 
@@ -54,7 +54,8 @@
     :END:
 
   2. Extract genotypes of GEUVADIS individuals \(X\) from 100 kilobases
-     upstream (respecting strand) of the gene start (~sse.evaluate.read_vcf~)
+     upstream (respecting strand) of the gene start
+     (~sse.evaluate.read_vcf~).
 
     #+BEGIN_SRC ipython
       genotype_files = ["/project/compbio/geuvadis/genotypes/GEUVADIS.chr{}.PH1PH2_465.IMPFRQFILT_BIALLELIC_PH.annotv2.genotypes.vcf.gz".format(i) for i in range(1, 23)]
@@ -76,7 +77,7 @@
 
 * One causal variant
 
-  #+BEGIN_SRC ipython :async t
+  #+BEGIN_SRC ipython
     one_causal = sse.evaluate.pip_calibration(
       genes=genes,
       genotype_files=genotype_files,
@@ -90,7 +91,22 @@
   :RESULTS:
   :END:
 
+  Tabulate the actual number of variants used in the simulation:
+
+  #+BEGIN_SRC ipython
+    one_causal.groupby(level=0).apply(lambda x: x.iloc[0]['num_snps'])
+  #+END_SRC
+
+  #+RESULTS:
+  :RESULTS:
+  #+BEGIN_EXAMPLE
+  ENSG00000143641    1498.0
+    dtype: float64
+  #+END_EXAMPLE
+  :END:
+
   #+BEGIN_SRC ipython :ipyfile one-causal-variant-spearman.png
+    del one_causal['num_snps']
     plt.clf()
     plt.boxplot(one_causal.fillna(0).values, labels=one_causal.columns)
     plt.xlabel('Method')
@@ -105,7 +121,7 @@
 
 * Two causal variants
 
-  #+BEGIN_SRC ipython :async t
+  #+BEGIN_SRC ipython 
     two_causal = sse.evaluate.pip_calibration(
       genes=genes,
       genotype_files=genotype_files,

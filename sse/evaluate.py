@@ -17,7 +17,7 @@ def _call_n(x, f, n, *args, **kwargs):
   return [f(i, x, *args, **kwargs) for i in range(n)]
 
 def _read_data(row, genotype_files, window):
-    if row['strand'] == '+':
+  if row['strand'] == '+':
     start = row['start'] - window
     end = row['start']
   else:
@@ -42,8 +42,9 @@ def _pip_calibration(trial, row, genotype_files, num_causal=1, window=int(1e5), 
   x = _read_data(row, genotype_files, window)
   y = _generate_pheno(trial, x, num_causal=num_causal)
   m = sse.model.GaussianSSE().fit(x, y, **kwargs)
-  corr = [m.pip_df.agg(np.sum, axis=1).corr(other(x, y)['pip'])
-          for other in sse.wrapper.methods]
+  corr = {other.__name__: m.pip_df.agg(np.sum, axis=1).corr(other(x, y)['pip'])
+          for other in sse.wrapper.methods}
+  corr['num_snps'] = x.shape[1]
   return pd.Series(corr)
 
 def pip_calibration(genes, genotype_files, num_genes=100, num_trials=10, num_causal=1, seed=0, **kwargs):
@@ -60,4 +61,4 @@ def pip_calibration(genes, genotype_files, num_genes=100, num_trials=10, num_cau
             .sample(num_genes, random_state=seed)
             .apply(_call_n, f=_pip_calibration, n=num_trials, genotype_files=genotype_files, num_causal=num_causal, **kwargs, axis=1)
             .apply(pd.DataFrame))
-  return pd.concat(result.to_dict()).rename(columns={i: f.__name__ for i, f in enumerate(sse.wrapper.methods)})
+  return pd.concat(result.to_dict())
