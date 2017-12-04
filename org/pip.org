@@ -14,7 +14,7 @@
   #+CALL: ipython3(mem="4G", venv="sse") :dir /scratch/midway2/aksarkar/sse
 
   #+RESULTS:
-  : Submitted batch job 40912387
+  : Submitted batch job 40913029
 
   #+BEGIN_SRC ipython
     import colorcet
@@ -69,9 +69,7 @@
      /cis/-heritability of gene expression across all genes; [[https://www.nature.com/articles/ng.3506][Gusev et al 2016]],
      [[https://www.nature.com/articles/ng.3506][Wheeler et al 2016]])
   5. Sample causal effects from \(\beta_j \sim N(0, 1)\)
-     (~sse.simulation.Simulation.sample_effects~). To ensure the methods can
-     detect the causal variant, we only sample from among variants with minor
-     allele frequency \(> 0.25\). (~sse.evaluate._generate_pheno~)
+     (~sse.simulation.Simulation.sample_effects~).
   6. Compute genetic variance \(V_g = \sum_j 2 f_j (1 - f_j) \beta_j^2\)
   7. Sample residuals \(\epsilon_i \sim N(0, V_g (1 / h^2 - 1))\)
   8. Compute phenotypes \(y_i = X_i\beta + \epsilon_i\) (~sse.simulation.Simulation.compute_liabilities~)
@@ -85,7 +83,6 @@
       num_genes=1,
       num_trials=10,
       num_effects=10,
-      max_epochs=100,
       seed=0)
   #+END_SRC
 
@@ -95,7 +92,7 @@
 
   #+BEGIN_SRC ipython :ipyfile one-causal-variant-spearman.png
     plt.clf()
-    plt.boxplot(one_causal.values, labels=one_causal.columns)
+    plt.boxplot(one_causal.fillna(0).values, labels=one_causal.columns)
     plt.xlabel('Method')
     plt.ylabel('Spearman correlation with SSE PIP')
     plt.gcf()
@@ -106,15 +103,32 @@
   [[file:one-causal-variant-spearman.png]]
   :END:
 
+* Two causal variants
 
+  #+BEGIN_SRC ipython :async t
+    two_causal = sse.evaluate.pip_calibration(
+      genes=genes,
+      genotype_files=genotype_files,
+      num_genes=1,
+      num_trials=10,
+      num_causal=2,
+      num_effects=10,
+      seed=0)
   #+END_SRC
 
   #+RESULTS:
   :RESULTS:
   :END:
 
+  #+BEGIN_SRC ipython :ipyfile two-causal-variants-spearman.png
+    plt.clf()
+    plt.boxplot(two_causal.fillna(0).values, labels=two_causal.columns)
+    plt.xlabel('Method')
+    plt.ylabel('Spearman correlation with SSE PIP')
+    plt.gcf()
   #+END_SRC
 
   #+RESULTS:
   :RESULTS:
+  [[file:two-causal-variants-spearman.png]]
   :END:

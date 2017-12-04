@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2017-12-02 Sat 00:10 -->
+<!-- 2017-12-04 Mon 10:40 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PIP calibration</title>
@@ -259,6 +259,7 @@ for the JavaScript code in this tag.
 <ul>
 <li><a href="#org068fe8b">Introduction</a></li>
 <li><a href="#orgc62c868">One causal variant</a></li>
+<li><a href="#orgdcb5f1c">Two causal variants</a></li>
 </ul>
 </div>
 </div>
@@ -273,10 +274,6 @@ variational approximation against other methods:
 </p>
 
 <ul class="org-ul">
-<li><a href="https://academic.oup.com/bioinformatics/article-lookup/doi/10.1093/bioinformatics/btw018">FINEMAP</a> (2016). We used version 1.1, setting the prior on the effect size
-scale to \(N(0, 1)\) (matching the simulation). We used defaults for all
-other settings. (<code>sse.wrapper.finemap</code>)</li>
-
 <li><a href="http://www.sciencedirect.com/science/article/pii/S0002929716300957?via%3Dihub">DAP</a> (2016). We used version 1.0, setting \(\phi = 0\) (no heterogeneity
 between groups of samples) and \(\omega = 1\) (matching the
 simulation). (<code>sse.wrapper.dap</code>)</li>
@@ -313,9 +310,7 @@ upstream (respecting strand) of the gene start (<code>sse.evaluate.read_vcf</cod
 <i>cis</i>-heritability of gene expression across all genes; <a href="https://www.nature.com/articles/ng.3506">Gusev et al 2016</a>,
 <a href="https://www.nature.com/articles/ng.3506">Wheeler et al 2016</a>)</li>
 <li>Sample causal effects from \(\beta_j \sim N(0, 1)\)
-(<code>sse.simulation.Simulation.sample_effects</code>). To ensure the methods can
-detect the causal variant, we only sample from among variants with minor
-allele frequency \(> 0.25\). (<code>sse.evaluate._generate_pheno</code>)</li>
+(<code>sse.simulation.Simulation.sample_effects</code>).</li>
 <li>Compute genetic variance \(V_g = \sum_j 2 f_j (1 - f_j) \beta_j^2\)</li>
 <li>Sample residuals \(\epsilon_i \sim N(0, V_g (1 / h^2 - 1))\)</li>
 <li>Compute phenotypes \(y_i = X_i\beta + \epsilon_i\) (<code>sse.simulation.Simulation.compute_liabilities</code>)</li>
@@ -333,14 +328,14 @@ allele frequency \(> 0.25\). (<code>sse.evaluate._generate_pheno</code>)</li>
   num_genes=1,
   num_trials=10,
   num_effects=10,
-  max_epochs=100,
+  max_epochs=200,
   seed=0)
 </pre>
 </div>
 
 <div class="org-src-container">
 <pre class="src src-ipython">plt.clf()
-plt.boxplot(one_causal.values, labels=one_causal.columns)
+plt.boxplot(one_causal.fillna(0).values, labels=one_causal.columns)
 plt.xlabel(<span class="org-string">'Method'</span>)
 plt.ylabel(<span class="org-string">'Spearman correlation with SSE PIP'</span>)
 plt.gcf()
@@ -352,87 +347,45 @@ plt.gcf()
 <p><img src="one-causal-variant-spearman.png" alt="one-causal-variant-spearman.png">
 </p>
 </div>
+</div>
+</div>
 
-<p>
-Investigate what's going on with FINEMAP:
-</p>
-
+<div id="outline-container-orgdcb5f1c" class="outline-2">
+<h2 id="orgdcb5f1c">Two causal variants</h2>
+<div class="outline-text-2" id="text-orgdcb5f1c">
 <div class="org-src-container">
-<pre class="src src-ipython"><span class="org-variable-name">x</span>, <span class="org-variable-name">y</span>, <span class="org-variable-name">s</span> = sse.evaluate._generate_pheno(0, genes.loc[<span class="org-string">"ENSG00000143641"</span>], genotype_files, 1, <span class="org-builtin">int</span>(1e5))
-<span class="org-variable-name">pip</span> = (sse.model.GaussianSSE()
-       .fit(x, y)
-       .pip_df
-       .agg(np.<span class="org-builtin">sum</span>, axis=1)
-       .to_frame()
-       .merge(sse.wrapper.finemap(x, y), left_index=<span class="org-constant">True</span>, right_index=<span class="org-constant">True</span>)
-       .rename(columns={0: <span class="org-string">'sse_pip'</span>, <span class="org-string">'pip'</span>: <span class="org-string">'finemap_pip'</span>}))
-<span class="org-variable-name">pip</span>[<span class="org-string">'causal'</span>] = s.theta != 0
-<span class="org-variable-name">pip</span>[<span class="org-string">'true_effect'</span>] = s.theta
+<pre class="src src-ipython"><span class="org-variable-name">two_causal</span> = sse.evaluate.pip_calibration(
+  genes=genes,
+  genotype_files=genotype_files,
+  num_genes=1,
+  num_trials=10,
+  num_causal=2,
+  num_effects=10,
+  max_epochs=200,
+  seed=0)
 </pre>
 </div>
 
-<p>
-SSE correctly recovers the causal variant, although the PIPs suggest that
-the simulated problem might be difficult for any method.
-</p>
-
 <div class="org-src-container">
-<pre class="src src-ipython">pip.sort_values(by=<span class="org-string">'sse_pip'</span>, ascending=<span class="org-constant">False</span>).head()
+<pre class="src src-ipython">plt.clf()
+plt.boxplot(two_causal.fillna(0).values, labels=two_causal.columns)
+plt.xlabel(<span class="org-string">'Method'</span>)
+plt.ylabel(<span class="org-string">'Spearman correlation with SSE PIP'</span>)
+plt.gcf()
 </pre>
 </div>
 
-<pre class="example">
-        sse_pip  index  finemap_pip  log10bf  causal  true_effect
-snp1278  0.264491   1279       0.1968   2.3662    True     1.031421
-snp1232  0.225833   1233       0.1843   2.3312   False     0.000000
-snp714   0.114354    715       0.1195   2.1096   False     0.000000
-snp980   0.085730    981       0.0867   1.9547   False     0.000000
-snp1122  0.071195   1123       0.0548   1.7401   False     0.000000
-</pre>
 
-<p>
-FINEMAP assigns stronger PIP to non-causal variants.
+<div class="figure">
+<p><img src="two-causal-variants-spearman.png" alt="two-causal-variants-spearman.png">
 </p>
-
-<div class="org-src-container">
-<pre class="src src-ipython">pip.sort_values(by=<span class="org-string">'log10bf'</span>, ascending=<span class="org-constant">False</span>).head()
-</pre>
 </div>
-
-<pre class="example">
-            sse_pip  index  finemap_pip  log10bf  causal  true_effect
-snp1398  2.676482e-05   1399       1.0000  12.9767   False     0.000000
-snp1404  1.135552e-08   1405       0.9998   6.6873   False     0.000000
-snp676   7.362895e-14    677       0.8887   3.8795   False     0.000000
-snp1278  2.644909e-01   1279       0.1968   2.3662    True     1.031421
-snp1232  2.258332e-01   1233       0.1843   2.3312   False     0.000000
-</pre>
-
-<p>
-FINEMAP picks SNPs in strong LD with the causal variant over the causal
-variant:
-</p>
-
-<div class="org-src-container">
-<pre class="src src-ipython"><span class="org-variable-name">query</span> = pip.sort_values(by=<span class="org-string">'log10bf'</span>, ascending=<span class="org-constant">False</span>).head().index
-pd.DataFrame(x, columns=[<span class="org-string">'snp{}'</span>.<span class="org-builtin">format</span>(i) <span class="org-keyword">for</span> i <span class="org-keyword">in</span> <span class="org-builtin">range</span>(x.shape[1])])[query].corr()
-</pre>
-</div>
-
-<pre class="example">
-        snp1398   snp1404    snp676   snp1278   snp1232
-snp1398  1.000000 -0.761444 -0.100979  0.793857  0.811527
-snp1404 -0.761444  1.000000  0.047893 -0.582444 -0.598379
-snp676  -0.100979  0.047893  1.000000 -0.107882 -0.106737
-snp1278  0.793857 -0.582444 -0.107882  1.000000  0.973466
-snp1232  0.811527 -0.598379 -0.106737  0.973466  1.000000
-</pre>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Abhishek Sarkar</p>
-<p class="date">Created: 2017-12-02 Sat 00:10</p>
+<p class="date">Created: 2017-12-04 Mon 10:40</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
