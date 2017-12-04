@@ -16,8 +16,8 @@ def _call_n(x, f, n, *args, **kwargs):
   """
   return [f(i, x, *args, **kwargs) for i in range(n)]
 
-def _generate_pheno(trial, row, genotype_files, num_causal, window):
-  if row['strand'] == '+':
+def _read_data(row, genotype_files, window):
+    if row['strand'] == '+':
     start = row['start'] - window
     end = row['start']
   else:
@@ -27,17 +27,20 @@ def _generate_pheno(trial, row, genotype_files, num_causal, window):
   x = read_vcf(genotype_files, int(row['chr'][2:]), start, end).T
   x = np.ma.masked_equal(x, -1)
   x = x.filled(x.mean())
+  return x
 
+def _generate_pheno(trial, x, num_causal):
   s = sse.simulation.Simulation(p=x.shape[1], seed=trial)
   s.estimate_mafs(x)
   s.sample_effects(pve=0.15, annotation_params=[(num_causal, 1)], permute=True)
   y = s.compute_liabilities(x).reshape(-1, 1)
 
-  return x, y, s
+  return y
 
 def _pip_calibration(trial, row, genotype_files, num_causal=1, window=int(1e5), **kwargs):
   """Single simulation trial"""
-  x, y, _ = _generate_pheno(trial, row, genotype_files, num_causal=num_causal, window=int(1e5))
+  x = _read_data(row, genotype_files, window)
+  y = _generate_pheno(trial, x, num_causal=num_causal)
   m = sse.model.GaussianSSE().fit(x, y, **kwargs)
   corr = [m.pip_df.agg(np.sum, axis=1).corr(other(x, y)['pip'])
           for other in sse.wrapper.methods]
