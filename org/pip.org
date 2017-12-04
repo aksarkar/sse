@@ -1,5 +1,6 @@
 #+TITLE: PIP calibration
 #+SETUPFILE: setup.org
+#+PROPERTY: header-args:ipython+ :session kernel-sse.json
 
 * Setup                                                            :noexport:
 
@@ -10,10 +11,10 @@
   #+RESULTS:
   : 1
 
-  #+CALL: ipython3(venv="sse") :dir /scratch/midway2/aksarkar/sse
+  #+CALL: ipython3(mem="4G", venv="sse") :dir /scratch/midway2/aksarkar/sse
 
   #+RESULTS:
-  : Submitted batch job 40873863
+  : Submitted batch job 40912387
 
   #+BEGIN_SRC ipython
     import colorcet
