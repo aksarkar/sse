@@ -34,18 +34,20 @@ def _generate_pheno(trial, x, num_causal):
   s.estimate_mafs(x)
   s.sample_effects(pve=0.15, annotation_params=[(num_causal, 1)], permute=True)
   y = s.compute_liabilities(x).reshape(-1, 1)
-
   return y
 
-def _pip_calibration(trial, row, genotype_files, num_causal=1, window=int(1e5), **kwargs):
+def max_abs_error(trial, row, genotype_files, num_causal=1, window=int(1e5), **kwargs):
   """Single simulation trial"""
   x = _read_data(row, genotype_files, window)
   y = _generate_pheno(trial, x, num_causal=num_causal)
   m = sse.model.GaussianSSE().fit(x, y, **kwargs)
-  corr = {other.__name__: m.pip_df.agg(np.sum, axis=1).corr(other(x, y)['pip'])
-          for other in sse.wrapper.methods}
-  corr['num_snps'] = x.shape[1]
-  return pd.Series(corr)
+  sse_pip = m.pip_df.apply(lambda x: 1 - np.prod(1 - x), axis=1)
+  assert sse_pip.apply(lambda x: 0 <= x <= 1).all()
+
+  max_abs_error = {other.__name__: max(abs(sse_pip - other(x, y)['pip']))
+                   for other in sse.wrapper.methods}
+  max_abs_error['num_snps'] = x.shape[1]
+  return pd.Series(max_abs_error)
 
 def pip_calibration(genes, genotype_files, num_genes=100, num_trials=10, num_causal=1, seed=0, **kwargs):
   """Evaluate the calibration of PIP
@@ -59,6 +61,6 @@ def pip_calibration(genes, genotype_files, num_genes=100, num_trials=10, num_cau
   """
   result = (genes
             .sample(num_genes, random_state=seed)
-            .apply(_call_n, f=_pip_calibration, n=num_trials, genotype_files=genotype_files, num_causal=num_causal, **kwargs, axis=1)
+            .apply(_call_n, f=max_abs_error, n=num_trials, genotype_files=genotype_files, num_causal=num_causal, **kwargs, axis=1)
             .apply(pd.DataFrame))
   return pd.concat(result.to_dict())

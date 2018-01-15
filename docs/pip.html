@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2017-12-05 Tue 12:03 -->
+<!-- 2018-01-12 Fri 14:51 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PIP calibration</title>
@@ -289,7 +289,7 @@ Sample a gene on chromosomes 1-22
 </p>
 
 <div class="org-src-container">
-<pre class="src src-ipython"><span class="org-variable-name">genes</span> = (pd.read_table(<span class="org-string">'/home/aksarkar/projects/singlecell-qtl/data/scqtl-genes.txt.gz'</span>)
+<pre class="src src-ipython" id="org3f2d37e"><span class="org-variable-name">genes</span> = (pd.read_table(<span class="org-string">'/home/aksarkar/projects/singlecell-qtl/data/scqtl-genes.txt.gz'</span>)
          .set_index(<span class="org-string">'gene'</span>)
          .query(<span class="org-string">'source == "H. sapiens"'</span>)
          .query(<span class="org-string">'chr != "hsX"'</span>)
@@ -305,7 +305,7 @@ upstream (respecting strand) of the gene start
 </p>
 
 <div class="org-src-container">
-<pre class="src src-ipython"><span class="org-variable-name">genotype_files</span> = [<span class="org-string">"/project/compbio/geuvadis/genotypes/GEUVADIS.chr{}.PH1PH2_465.IMPFRQFILT_BIALLELIC_PH.annotv2.genotypes.vcf.gz"</span>.<span class="org-builtin">format</span>(i) <span class="org-keyword">for</span> i <span class="org-keyword">in</span> <span class="org-builtin">range</span>(1, 23)]
+<pre class="src src-ipython" id="org5de7e0c"><span class="org-variable-name">genotype_files</span> = [<span class="org-string">"/project/compbio/geuvadis/genotypes/GEUVADIS.chr{}.PH1PH2_465.IMPFRQFILT_BIALLELIC_PH.annotv2.genotypes.vcf.gz"</span>.<span class="org-builtin">format</span>(i) <span class="org-keyword">for</span> i <span class="org-keyword">in</span> <span class="org-builtin">range</span>(1, 23)]
 </pre>
 </div></li>
 
@@ -337,77 +337,28 @@ upstream (respecting strand) of the gene start
 </div>
 
 <p>
+7e9f5cbf-4e54-49b7-bc05-4ed58a32a49a
+</p>
+
+<p>
 Tabulate the actual number of variants used in the simulation:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-ipython">one_causal.groupby(level=0).<span class="org-builtin">apply</span>(<span class="org-keyword">lambda</span> x: x.iloc[0][<span class="org-string">'num_snps'</span>])
+<pre class="src src-ipython">one_causal.groupby(level=0).<span class="org-builtin">apply</span>(<span class="org-keyword">lambda</span> x: x.iloc[0][<span class="org-string">'num_snps'</span>]).describe()
 </pre>
 </div>
 
 <pre class="example">
-ENSG00000003402    1061.0
-  ENSG00000004776    1406.0
-  ENSG00000008018    1153.0
-  ENSG00000012779    1921.0
-  ENSG00000029725    1404.0
-  ENSG00000063322    1151.0
-  ENSG00000064666    1734.0
-  ENSG00000082497    1410.0
-  ENSG00000095303    1210.0
-  ENSG00000095585    1408.0
-  ENSG00000100285    1317.0
-  ENSG00000101187     925.0
-  ENSG00000104881    1307.0
-  ENSG00000105523    1225.0
-  ENSG00000108309    1152.0
-  ENSG00000108523    1290.0
-  ENSG00000109771    1397.0
-  ENSG00000115137    1130.0
-  ENSG00000115541    1087.0
-  ENSG00000116117    1420.0
-  ENSG00000123364    1393.0
-  ENSG00000128309    1749.0
-  ENSG00000130147    1620.0
-  ENSG00000130699    1498.0
-  ENSG00000130725     441.0
-  ENSG00000132329    1363.0
-  ENSG00000135482    1048.0
-  ENSG00000136531    1311.0
-  ENSG00000139190    1495.0
-  ENSG00000139974    1234.0
-                      ...  
-  ENSG00000181019    1250.0
-  ENSG00000181333    1512.0
-  ENSG00000181562    1781.0
-  ENSG00000182177    1418.0
-  ENSG00000182791    1036.0
-  ENSG00000184787    1592.0
-  ENSG00000184898    1484.0
-  ENSG00000188133    1546.0
-  ENSG00000196371    1462.0
-  ENSG00000197385    1479.0
-  ENSG00000197822    1086.0
-  ENSG00000198829    1427.0
-  ENSG00000204248    1103.0
-  ENSG00000204385    1053.0
-  ENSG00000204488      21.0
-  ENSG00000213265    1195.0
-  ENSG00000213398    1026.0
-  ENSG00000214447    1296.0
-  ENSG00000215612    1884.0
-  ENSG00000220256    1656.0
-  ENSG00000223802    1224.0
-  ENSG00000226209    1519.0
-  ENSG00000228835    1287.0
-  ENSG00000236029       1.0
-  ENSG00000254087    1342.0
-  ENSG00000255561    1117.0
-  ENSG00000267884    1534.0
-  ENSG00000268156    1309.0
-  ENSG00000268488    1194.0
-  ENSG00000269042    1147.0
-  Length: 100, dtype: float64
+count     100.000000
+  mean     1308.960000
+  std       290.199023
+  min         9.000000
+  25%      1213.250000
+  50%      1319.500000
+  75%      1469.000000
+  max      1852.000000
+  dtype: float64
 </pre>
 
 <div class="org-src-container">
@@ -419,14 +370,14 @@ ENSG00000003402    1061.0
 <pre class="src src-ipython">plt.clf()
 plt.boxplot(one_causal.fillna(0).values, labels=one_causal.columns)
 plt.xlabel(<span class="org-string">'Method'</span>)
-plt.ylabel(<span class="org-string">'Spearman correlation with SSE PIP'</span>)
+plt.ylabel(<span class="org-string">'Maximum absolute difference in PIP'</span>)
 plt.gcf()
 </pre>
 </div>
 
 
 <div class="figure">
-<p><img src="one-causal-variant-spearman.png" alt="one-causal-variant-spearman.png">
+<p><img src="one-causal-variant-max-error.png" alt="one-causal-variant-max-error.png">
 </p>
 </div>
 </div>
@@ -471,7 +422,7 @@ plt.gcf()
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Abhishek Sarkar</p>
-<p class="date">Created: 2017-12-05 Tue 12:03</p>
+<p class="date">Created: 2018-01-12 Fri 14:51</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
