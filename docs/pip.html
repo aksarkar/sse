@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2018-01-12 Fri 14:51 -->
+<!-- 2018-01-17 Wed 15:23 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PIP calibration</title>
@@ -268,9 +268,8 @@ for the JavaScript code in this tag.
 <h2 id="org068fe8b">Introduction</h2>
 <div class="outline-text-2" id="text-org068fe8b">
 <p>
-Here we estimate Spearman correlation between posterior inclusion
-probabilities (PIPs) computed using the Sum of Single Effects (SSE)
-variational approximation against other methods:
+Here we compare posterior inclusion probabilities (PIPs) computed using the
+Sum of Single Effects (SSE) variational approximation against other methods:
 </p>
 
 <ul class="org-ul">
@@ -285,8 +284,33 @@ The simulation generative model is as follows (<code>sse.evaluate._pip_calibrati
 
 <ol class="org-ol">
 <li><p>
-Sample a gene on chromosomes 1-22
+Sample a gene on chromosomes 1-22 which has at least 1,000 SNPs within 100
+kilobases (respecting strand) of the gene start.
 </p>
+
+<div class="org-src-container">
+<pre class="src src-ipython" id="org5de7e0c"><span class="org-variable-name">genotype_files</span> = [<span class="org-string">"/project/compbio/geuvadis/genotypes/GEUVADIS.chr{}.PH1PH2_465.IMPFRQFILT_BIALLELIC_PH.annotv2.genotypes.vcf.gz"</span>.<span class="org-builtin">format</span>(i) <span class="org-keyword">for</span> i <span class="org-keyword">in</span> <span class="org-builtin">range</span>(1, 23)]
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-ipython"><span class="org-keyword">def</span> <span class="org-function-name">filter_genes</span>(row, genotype_files, window, min_num_snps=1000):
+  <span class="org-variable-name">window</span> = <span class="org-builtin">int</span>(window)
+  <span class="org-variable-name">chrom</span> = <span class="org-builtin">int</span>(row[<span class="org-string">'chr'</span>][2:])
+  <span class="org-keyword">if</span> row[<span class="org-string">'strand'</span>] == <span class="org-string">'+'</span>:
+    <span class="org-variable-name">start</span> = row[<span class="org-string">'start'</span>] - window
+    <span class="org-variable-name">end</span> = row[<span class="org-string">'start'</span>]
+  <span class="org-keyword">else</span>:
+    <span class="org-variable-name">start</span> = row[<span class="org-string">'start'</span>]
+    <span class="org-variable-name">end</span> = row[<span class="org-string">'start'</span>] + window
+  <span class="org-variable-name">count</span> = 0
+  <span class="org-keyword">for</span> record <span class="org-keyword">in</span> tabix.<span class="org-builtin">open</span>(genotype_files[chrom - 1]).query(<span class="org-builtin">str</span>(chrom), start, end):
+    <span class="org-variable-name">count</span> += 1
+    <span class="org-keyword">if</span> count &gt; min_num_snps:
+      <span class="org-keyword">return</span> <span class="org-constant">True</span>
+  <span class="org-keyword">return</span> <span class="org-constant">False</span>
+</pre>
+</div>
 
 <div class="org-src-container">
 <pre class="src src-ipython" id="org3f2d37e"><span class="org-variable-name">genes</span> = (pd.read_table(<span class="org-string">'/home/aksarkar/projects/singlecell-qtl/data/scqtl-genes.txt.gz'</span>)
@@ -295,20 +319,27 @@ Sample a gene on chromosomes 1-22
          .query(<span class="org-string">'chr != "hsX"'</span>)
          .query(<span class="org-string">'chr != "hsY"'</span>)
          .query(<span class="org-string">'chr != "hsMT"'</span>))
+<span class="org-variable-name">genes</span> = genes[genes.<span class="org-builtin">apply</span>(filter_genes, genotype_files=genotype_files, window=<span class="org-builtin">int</span>(1e5), axis=1)]
 </pre>
-</div></li>
+</div>
 
-<li><p>
-Extract genotypes of GEUVADIS individuals \(X\) from 100 kilobases
-upstream (respecting strand) of the gene start
-(<code>sse.evaluate.read_vcf</code>).
+<p>
+Write out the filtered set of genes so we don't have to do this
+long-running query more than once:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-ipython" id="org5de7e0c"><span class="org-variable-name">genotype_files</span> = [<span class="org-string">"/project/compbio/geuvadis/genotypes/GEUVADIS.chr{}.PH1PH2_465.IMPFRQFILT_BIALLELIC_PH.annotv2.genotypes.vcf.gz"</span>.<span class="org-builtin">format</span>(i) <span class="org-keyword">for</span> i <span class="org-keyword">in</span> <span class="org-builtin">range</span>(1, 23)]
+<pre class="src src-ipython" id="org1df61b1">genes.to_csv(<span class="org-string">'/home/aksarkar/projects/sse/data/genes.txt.gz'</span>, sep=<span class="org-string">'\t'</span>, compression=<span class="org-string">'gzip'</span>)
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-ipython" id="orgde74c09"><span class="org-variable-name">genes</span> = pd.read_table(<span class="org-string">'/home/aksarkar/projects/sse/data/genes.txt.gz'</span>, index_col=0)
 </pre>
 </div></li>
 
+<li>Extract genotypes of GEUVADIS individuals \(X\) from 100 kilobases
+upstream (respecting strand) of the gene start (<code>sse.evaluate.read_vcf</code>).</li>
 <li value="3">Estimate MAF \(f_j\) from \(X\) (<code>sse.simulation.Simulation.estimate_maf</code>)</li>
 <li>Fix proportion of variance explained \(h^2 = 0.15\) (mean
 <i>cis</i>-heritability of gene expression across all genes; <a href="https://www.nature.com/articles/ng.3506">Gusev et al 2016</a>,
@@ -337,10 +368,6 @@ upstream (respecting strand) of the gene start
 </div>
 
 <p>
-7e9f5cbf-4e54-49b7-bc05-4ed58a32a49a
-</p>
-
-<p>
 Tabulate the actual number of variants used in the simulation:
 </p>
 
@@ -351,14 +378,14 @@ Tabulate the actual number of variants used in the simulation:
 
 <pre class="example">
 count     100.000000
-  mean     1308.960000
-  std       290.199023
-  min         9.000000
-  25%      1213.250000
-  50%      1319.500000
-  75%      1469.000000
-  max      1852.000000
-  dtype: float64
+mean     1381.850000
+std       216.044672
+min      1014.000000
+25%      1230.750000
+50%      1376.500000
+75%      1497.000000
+max      2320.000000
+dtype: float64
 </pre>
 
 <div class="org-src-container">
@@ -386,6 +413,10 @@ plt.gcf()
 <div id="outline-container-orgdcb5f1c" class="outline-2">
 <h2 id="orgdcb5f1c">Two causal variants</h2>
 <div class="outline-text-2" id="text-orgdcb5f1c">
+<p>
+This takes ~4 hours to run.
+</p>
+
 <div class="org-src-container">
 <pre class="src src-ipython"><span class="org-variable-name">two_causal</span> = sse.evaluate.pip_calibration(
   genes=genes,
@@ -395,6 +426,25 @@ plt.gcf()
   num_causal=2,
   num_effects=10,
   seed=0)
+two_causal.to_csv(<span class="org-string">'/home/aksarkar/projects/sse/data/two-causal-max-error.txt.gz'</span>, sep=<span class="org-string">'\t'</span>, compression=<span class="org-string">'gzip'</span>)
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(org-tangle-buffer)
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-sh">sbatch --partition=<span class="org-string">"broadwl"</span> --mem=4G --time=200 --job-name=<span class="org-string">"sse"</span>
+<span class="org-comment-delimiter">#</span><span class="org-comment">!/bin/bash</span>
+<span class="org-builtin">source</span> activate sse
+python pip.py
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-ipython"><span class="org-variable-name">two_causal</span> = pd.read_table(<span class="org-string">'/home/aksarkar/projects/sse/data/two-causal-max-error.txt.gz'</span>, index_col=[0, 1])
 </pre>
 </div>
 
@@ -407,14 +457,14 @@ plt.gcf()
 <pre class="src src-ipython">plt.clf()
 plt.boxplot(two_causal.fillna(0).values, labels=two_causal.columns)
 plt.xlabel(<span class="org-string">'Method'</span>)
-plt.ylabel(<span class="org-string">'Spearman correlation with SSE PIP'</span>)
+plt.ylabel(<span class="org-string">'Maximum absolute difference in PIP'</span>)
 plt.gcf()
 </pre>
 </div>
 
 
 <div class="figure">
-<p><img src="two-causal-variants-spearman.png" alt="two-causal-variants-spearman.png">
+<p><img src="two-causal-variants-max-error.png" alt="two-causal-variants-max-error.png">
 </p>
 </div>
 </div>
@@ -422,7 +472,7 @@ plt.gcf()
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Abhishek Sarkar</p>
-<p class="date">Created: 2018-01-12 Fri 14:51</p>
+<p class="date">Created: 2018-01-17 Wed 15:23</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

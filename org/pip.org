@@ -1,6 +1,5 @@
 #+TITLE: PIP calibration
 #+SETUPFILE: setup.org
-#+PROPERTY: header-args:ipython+ :session kernel-sse.json
 
 * Setup                                                            :noexport:
 
@@ -14,9 +13,9 @@
   #+CALL: ipython3(mem="4G", venv="sse") :dir /scratch/midway2/aksarkar/sse
 
   #+RESULTS:
-  : Submitted batch job 42150748
+  : Submitted batch job 42223712
 
-  #+BEGIN_SRC ipython
+  #+BEGIN_SRC ipython :tangle pip.py
     import glob
     import matplotlib.pyplot as plt
     import numpy as np
@@ -27,6 +26,7 @@
 
   #+RESULTS:
   :RESULTS:
+  # Out[1]:
   :END:
 
 * Introduction
@@ -44,12 +44,13 @@
      kilobases (respecting strand) of the gene start.
 
      #+NAME: get-genotypes
-     #+BEGIN_SRC ipython
+     #+BEGIN_SRC ipython :tangle pip.py
        genotype_files = ["/project/compbio/geuvadis/genotypes/GEUVADIS.chr{}.PH1PH2_465.IMPFRQFILT_BIALLELIC_PH.annotv2.genotypes.vcf.gz".format(i) for i in range(1, 23)]
      #+END_SRC
 
      #+RESULTS: get-genotypes
      :RESULTS:
+     # Out[14]:
      :END:
 
      #+BEGIN_SRC ipython
@@ -102,13 +103,17 @@
      :END:
 
      #+NAME: read-genes
-     #+BEGIN_SRC ipython
+     #+BEGIN_SRC ipython :tangle pip.py
        genes = pd.read_table('/home/aksarkar/projects/sse/data/genes.txt.gz', index_col=0)
      #+END_SRC
 
+     #+RESULTS: read-genes
+     :RESULTS:
+     # Out[13]:
+     :END:
+
   2. Extract genotypes of GEUVADIS individuals \(X\) from 100 kilobases
      upstream (respecting strand) of the gene start (~sse.evaluate.read_vcf~).
-
   3. [@3] Estimate MAF \(f_j\) from \(X\) (~sse.simulation.Simulation.estimate_maf~)
   4. Fix proportion of variance explained \(h^2 = 0.15\) (mean
      /cis/-heritability of gene expression across all genes; [[https://www.nature.com/articles/ng.3506][Gusev et al 2016]],
@@ -133,7 +138,7 @@
 
   #+RESULTS:
   :RESULTS:
-  4d496399-46a0-4621-8b94-c4c63b714e20
+  # Out[5]:
   :END:
 
   Tabulate the actual number of variants used in the simulation:
@@ -144,15 +149,16 @@
 
   #+RESULTS:
   :RESULTS:
+  # Out[6]:
   #+BEGIN_EXAMPLE
-  count     100.000000
-    mean     1308.960000
-    std       290.199023
-    min         9.000000
-    25%      1213.250000
-    50%      1319.500000
-    75%      1469.000000
-    max      1852.000000
+    count     100.000000
+    mean     1381.850000
+    std       216.044672
+    min      1014.000000
+    25%      1230.750000
+    50%      1376.500000
+    75%      1497.000000
+    max      2320.000000
     dtype: float64
   #+END_EXAMPLE
   :END:
@@ -163,6 +169,7 @@
 
   #+RESULTS:
   :RESULTS:
+  # Out[7]:
   :END:
 
   #+BEGIN_SRC ipython :ipyfile one-causal-variant-max-error.png
@@ -175,12 +182,13 @@
 
   #+RESULTS:
   :RESULTS:
+  # Out[8]:
   [[file:one-causal-variant-max-error.png]]
   :END:
 
 * Two causal variants
 
-  #+BEGIN_SRC ipython :async t :results none
+  #+BEGIN_SRC ipython
     two_causal = sse.evaluate.pip_calibration(
       genes=genes,
       genotype_files=genotype_files,
@@ -189,10 +197,44 @@
       num_causal=2,
       num_effects=10,
       seed=0)
+    two_causal.to_csv('/home/aksarkar/projects/sse/data/two-causal-max-error.txt.gz', sep='\t', compression='gzip')
   #+END_SRC
 
   #+RESULTS:
   :RESULTS:
+  :END:
+
+  #+BEGIN_SRC emacs-lisp
+    (org-tangle-buffer)
+  #+END_SRC
+
+  #+BEGIN_SRC sh
+    sbatch --partition="broadwl" --mem=4G --time=200 --job-name="sse"
+    #!/bin/bash
+    source activate sse
+    python pip.py
+  #+END_SRC
+
+  #+RESULTS:
+  : Submitted batch job 42219721
+
+  #+BEGIN_SRC sh
+    sacct -j 42219721 -o Elapsed,MaxRSS,MaxVMSize
+  #+END_SRC
+
+  #+RESULTS:
+  |    Elapsed | MaxRSS     | MaxVMSize  |
+  | ---------- | ---------- | ---------- |
+  |   02:14:44 |            |            |
+  |   02:14:44 | 263184K    | 1852440K   |
+
+  #+BEGIN_SRC ipython
+    two_causal = pd.read_table('/home/aksarkar/projects/sse/data/two-causal-max-error.txt.gz', index_col=[0, 1])
+  #+END_SRC
+
+  #+RESULTS:
+  :RESULTS:
+  # Out[11]:
   :END:
 
   #+BEGIN_SRC ipython
@@ -201,17 +243,19 @@
 
   #+RESULTS:
   :RESULTS:
+  # Out[13]:
   :END:
 
-  #+BEGIN_SRC ipython :ipyfile two-causal-variants-spearman.png
+  #+BEGIN_SRC ipython :ipyfile two-causal-variants-max-error.png
     plt.clf()
     plt.boxplot(two_causal.fillna(0).values, labels=two_causal.columns)
     plt.xlabel('Method')
-    plt.ylabel('Spearman correlation with SSE PIP')
+    plt.ylabel('Maximum absolute difference in PIP')
     plt.gcf()
   #+END_SRC
 
   #+RESULTS:
   :RESULTS:
-  [[file:two-causal-variants-spearman.png]]
+  # Out[14]:
+  [[file:two-causal-variants-max-error.png]]
   :END:
