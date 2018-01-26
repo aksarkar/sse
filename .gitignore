@@ -65,4 +65,7 @@ locate.db
 *.pkl
 /TAGS
 
+setup.html
+data/
+org/*.py
 org/*.png

@@ -34,20 +34,54 @@ def _generate_pheno(trial, x, num_causal):
   s.estimate_mafs(x)
   s.sample_effects(pve=0.15, annotation_params=[(num_causal, 1)], permute=True)
   y = s.compute_liabilities(x).reshape(-1, 1)
-  return y
+  return s, y
 
 def max_abs_error(trial, row, genotype_files, num_causal=1, window=int(1e5), **kwargs):
-  """Single simulation trial"""
+  """Single simulation trial
+
+  Return pd.Series. For each method in sse.wrapper.methods:
+
+  method - maximum error between SSE PIP and that method's PIP
+  method_pip - method's PIP at maximum error
+  sse_method_pip - SSE estimate of PIP at maximum error
+  effect - true effect size at variant with maximum error
+  maf - minor allele frequency at variant with maximum error
+
+  """
   x = _read_data(row, genotype_files, window)
-  y = _generate_pheno(trial, x, num_causal=num_causal)
+  s, y = _generate_pheno(trial, x, num_causal=num_causal)
   m = sse.model.GaussianSSE().fit(x, y, **kwargs)
   sse_pip = m.pip_df.apply(lambda x: 1 - np.prod(1 - x), axis=1)
   assert sse_pip.apply(lambda x: 0 <= x <= 1).all()
+  other_pip = {other.__name__: other(x, y)['pip'] for other in sse.wrapper.methods}
 
-  max_abs_error = {other.__name__: max(abs(sse_pip - other(x, y)['pip']))
-                   for other in sse.wrapper.methods}
-  max_abs_error['num_snps'] = x.shape[1]
-  return pd.Series(max_abs_error)
+  error = {('error', k): max(abs(sse_pip - v)) for k, v in other_pip.items()}
+  # The Series sse_pip, v, (sse_pip - v) are all indexed like 'snpN'. But the
+  # simulation is indexed by N
+  snpname = {k: abs(sse_pip - v).idxmax() for k, v in other_pip.items()}
+  pip_at_error = {('other_pip', k): other_pip[k][v] for k, v in snpname.items()}
+  sse_pip_at_error = {('sse_pip', k): sse_pip[v] for k, v in snpname.items()}
+  for (_, k), v in error.items():
+    assert np.isclose(abs(pip_at_error[('other_pip', k)] - sse_pip_at_error[('sse_pip', k)]), v)
+
+  index = {k: int(v[3:]) for k, v in snpname.items()}
+  effect = {('effect', k): s.theta[v] for k, v in index.items()}
+  maf = {('maf', k): s.maf[v] for k, v in index.items()}
+
+  w = x - x.mean()
+  w /= w.std()
+  cov = w.T.dot(w) / w.shape[0]
+  assert cov.shape == (w.shape[1], w.shape[1])
+  ld_at_error = {('ld', k): cov[~np.isclose(s.theta, 0), v].max() for k, v in index.items()}
+
+  result = error.copy()
+  result.update(effect)
+  result.update(maf)
+  result.update(pip_at_error)
+  result.update(sse_pip_at_error)
+  result.update(ld_at_error)
+  result['num_snps'] = x.shape[1]
+  return pd.Series(result)
 
 def pip_calibration(genes, genotype_files, num_genes=100, num_trials=10, num_causal=1, seed=0, **kwargs):
   """Evaluate the calibration of PIP
