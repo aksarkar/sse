@@ -80,7 +80,7 @@ def max_abs_error(trial, row, genotype_files, num_causal=1, window=int(1e5), **k
   result.update(pip_at_error)
   result.update(sse_pip_at_error)
   result.update(ld_at_error)
-  result['num_snps'] = x.shape[1]
+  result[('num_snps', )] = x.shape[1]
   return pd.Series(result)
 
 def pip_calibration(genes, genotype_files, num_genes=100, num_trials=10, num_causal=1, seed=0, **kwargs):

@@ -13,7 +13,16 @@
   #+CALL: ipython3(mem="4G", venv="sse") :dir /scratch/midway2/aksarkar/sse
 
   #+RESULTS:
-  : Submitted batch job 42223712
+  : Submitted batch job 42548098
+
+  #+BEGIN_SRC ipython
+    %matplotlib inline
+  #+END_SRC
+
+  #+RESULTS:
+  :RESULTS:
+  # Out[96]:
+  :END:
 
   #+BEGIN_SRC ipython :tangle pip.py
     import glob
@@ -26,7 +35,7 @@
 
   #+RESULTS:
   :RESULTS:
-  # Out[1]:
+  # Out[2]:
   :END:
 
 * Introduction
@@ -50,7 +59,7 @@
 
      #+RESULTS: get-genotypes
      :RESULTS:
-     # Out[14]:
+     # Out[21]:
      :END:
 
      #+BEGIN_SRC ipython
@@ -109,7 +118,7 @@
 
      #+RESULTS: read-genes
      :RESULTS:
-     # Out[13]:
+     # Out[16]:
      :END:
 
   2. Extract genotypes of GEUVADIS individuals \(X\) from 100 kilobases
@@ -126,7 +135,7 @@
 
 * One causal variant
 
-  #+BEGIN_SRC ipython :async t
+  #+BEGIN_SRC ipython :eval never :tangle pip.py
     one_causal = sse.evaluate.pip_calibration(
       genes=genes,
       genotype_files=genotype_files,
@@ -134,11 +143,21 @@
       num_trials=1,
       num_effects=10,
       seed=0)
+    one_causal.to_csv('/home/aksarkar/projects/sse/data/one-causal-max-error.txt.gz', sep='\t', compression='gzip')
   #+END_SRC
 
   #+RESULTS:
   :RESULTS:
-  # Out[5]:
+  # Out[22]:
+  :END:
+
+  #+BEGIN_SRC ipython
+    one_causal = pd.read_table('/home/aksarkar/projects/sse/data/one-causal-max-error.txt.gz', index_col=[0, 1])
+  #+END_SRC
+
+  #+RESULTS:
+  :RESULTS:
+  # Out[71]:
   :END:
 
   Tabulate the actual number of variants used in the simulation:
@@ -172,9 +191,16 @@
   # Out[7]:
   :END:
 
+  #+BEGIN_SRC ipython
+    one_causal.columns = pd.MultiIndex.from_tuples([eval(x) for x in one_causal.columns])
+  #+END_SRC
+
+  The distribution of maximum absolute error in PIP is centered away from zero,
+  suggesting systematic differences between SSE and the other methods.
+
   #+BEGIN_SRC ipython :ipyfile one-causal-variant-max-error.png
     plt.clf()
-    plt.boxplot(one_causal.fillna(0).values, labels=one_causal.columns)
+    plt.boxplot(one_causal['error'].fillna(0).values, labels=one_causal['error'].columns)
     plt.xlabel('Method')
     plt.ylabel('Maximum absolute difference in PIP')
     plt.gcf()
@@ -182,13 +208,80 @@
 
   #+RESULTS:
   :RESULTS:
-  # Out[8]:
+  # Out[84]:
   [[file:one-causal-variant-max-error.png]]
+  :END:
+
+  Looking only at the variant with the maximum discrepancy between SSE/DAP, and
+  conditioning on whether the variant was simulated to have a non-zero effect
+  size (causal) or not (noncausal), SSE appears to assign higher PIP to
+  non-causal variants (i.e., less confidently classifies them as not causal),
+  while DAP appears to assign higher PIP to causal variants.
+
+  #+BEGIN_SRC ipython :ipyfile one-causal-pip-scatter.png
+    plt.clf()
+    keep = np.isclose(one_causal['effect'][k], 0)
+    plt.scatter(x=one_causal.loc[keep, 'other_pip']['dap'], y=one_causal.loc[keep, 'sse_pip']['dap'], c='blue', label='Noncausal')
+    plt.scatter(x=one_causal.loc[~keep, 'other_pip']['dap'], y=one_causal.loc[~keep, 'sse_pip']['dap'], c='red', label='Causal')
+    plt.legend()
+    plt.plot([[0, 0], [1, 1]], ls='-', c='k')
+    plt.xlim(0, 1)
+    plt.xticks(np.linspace(0, 1, 9))
+    plt.xlabel('DAP PIP')
+    plt.ylim(0, 1)
+    plt.yticks(np.linspace(0, 1, 9))
+    plt.ylabel('SSE PIP')
+  #+END_SRC
+
+  #+RESULTS:
+  :RESULTS:
+  # Out[158]:
+  : Text(0,0.5,'SSE PIP')
+  [[file:one-causal-pip-scatter.png]]
+  :END:
+
+  One explanation for the fact that DAP assigns higher PIP to causal variants
+  is that SSE loses power to detect causal variants which are extremely rare or
+  have small effect size. One explanation for the fact that SSE assigns higher
+  PIP to non-causal variants is that they are in moderate LD with the causal variant
+
+  #+BEGIN_SRC ipython :ipyfile one-causal-maf-effect.png
+    plt.clf()
+    fig, ax = plt.subplots(3, 1)
+    fig.set_size_inches(8, 12)
+    ax[0].scatter(x=one_causal.loc[keep, 'other_pip']['dap'], y=one_causal.loc[keep, 'maf']['dap'], c='blue', label='Noncausal')
+    ax[0].scatter(x=one_causal.loc[~keep, 'other_pip']['dap'], y=one_causal.loc[~keep, 'maf']['dap'], c='red', label='Causal')
+    ax[0].legend()
+    ax[0].set_xlim(0, 1)
+    ax[0].set_xticks(np.linspace(0, 1, 9))
+    ax[0].set_ylabel('Minor allele frequency')
+
+    ax[1].scatter(x=one_causal.loc[keep, 'other_pip']['dap'], y=one_causal.loc[keep, 'effect']['dap'], c='blue')
+    ax[1].scatter(x=one_causal.loc[~keep, 'other_pip']['dap'], y=one_causal.loc[~keep, 'effect']['dap'], c='red')
+    ax[1].axhline(y=0, c='k')
+    ax[1].set_xlim(0, 1)
+    ax[1].set_xticks(np.linspace(0, 1, 9))
+    ax[1].set_ylabel('Effect size')
+
+    ax[2].scatter(x=one_causal.loc[keep, 'other_pip']['dap'], y=one_causal.loc[keep, 'ld']['dap'], c='blue')
+    ax[2].axhline(y=0, c='k')
+    ax[2].set_xlim(0, 1)
+    ax[2].set_xticks(np.linspace(0, 1, 9))
+    ax[2].set_ylim(-1, 1)
+    ax[2].set_ylabel('Max LD $r^2$ with causal variant')
+    ax[2].set_xlabel('DAP PIP')
+  #+END_SRC
+
+  #+RESULTS:
+  :RESULTS:
+  # Out[160]:
+  : Text(0.5,0,'DAP PIP')
+  [[file:one-causal-maf-effect.png]]
   :END:
 
 * Two causal variants
 
-  #+BEGIN_SRC ipython
+  #+BEGIN_SRC ipython :eval never :tangle pip.py
     two_causal = sse.evaluate.pip_calibration(
       genes=genes,
       genotype_files=genotype_files,
@@ -203,30 +296,6 @@
   #+RESULTS:
   :RESULTS:
   :END:
-
-  #+BEGIN_SRC emacs-lisp
-    (org-tangle-buffer)
-  #+END_SRC
-
-  #+BEGIN_SRC sh
-    sbatch --partition="broadwl" --mem=4G --time=200 --job-name="sse"
-    #!/bin/bash
-    source activate sse
-    python pip.py
-  #+END_SRC
-
-  #+RESULTS:
-  : Submitted batch job 42219721
-
-  #+BEGIN_SRC sh
-    sacct -j 42219721 -o Elapsed,MaxRSS,MaxVMSize
-  #+END_SRC
-
-  #+RESULTS:
-  |    Elapsed | MaxRSS     | MaxVMSize  |
-  | ---------- | ---------- | ---------- |
-  |   02:14:44 |            |            |
-  |   02:14:44 | 263184K    | 1852440K   |
 
   #+BEGIN_SRC ipython
     two_causal = pd.read_table('/home/aksarkar/projects/sse/data/two-causal-max-error.txt.gz', index_col=[0, 1])
@@ -259,3 +328,83 @@
   # Out[14]:
   [[file:two-causal-variants-max-error.png]]
   :END:
+
+* Three causal variants
+
+  #+BEGIN_SRC ipython :eval never :tangle pip.py
+    three_causal = sse.evaluate.pip_calibration(
+      genes=genes,
+      genotype_files=genotype_files,
+      num_genes=100,
+      num_trials=1,
+      num_causal=2,
+      num_effects=10,
+      seed=0)
+    three_causal.to_csv('/home/aksarkar/projects/sse/data/three-causal-max-error.txt.gz', sep='\t', compression='gzip')
+  #+END_SRC
+
+  #+RESULTS:
+  :RESULTS:
+  :END:
+
+  #+BEGIN_SRC ipython
+    three_causal = pd.read_table('/home/aksarkar/projects/sse/data/three-causal-max-error.txt.gz', index_col=[0, 1])
+  #+END_SRC
+
+  #+RESULTS:
+  :RESULTS:
+  # Out[11]:
+  :END:
+
+  #+BEGIN_SRC ipython
+    del three_causal['num_snps']
+  #+END_SRC
+
+  #+RESULTS:
+  :RESULTS:
+  # Out[13]:
+  :END:
+
+  #+BEGIN_SRC ipython :ipyfile three-causal-variants-max-error.png
+    plt.clf()
+    plt.boxplot(three_causal.fillna(0).values, labels=three_causal.columns)
+    plt.xlabel('Method')
+    plt.ylabel('Maximum absolute difference in PIP')
+    plt.gcf()
+  #+END_SRC
+
+  #+RESULTS:
+  :RESULTS:
+  # Out[14]:
+  [[file:three-causal-variants-max-error.png]]
+  :END:
+
+* Run the code on RCC                                              :noexport:
+
+  #+BEGIN_SRC emacs-lisp
+    (org-babel-tangle)
+  #+END_SRC
+
+  #+RESULTS:
+  | pip.py |
+
+  #+BEGIN_SRC sh
+    sbatch --partition="broadwl" --mem=4G --time=400 --job-name="sse"
+    #!/bin/bash
+    source activate sse
+    python pip.py
+  #+END_SRC
+
+  #+RESULTS:
+  : Submitted batch job 42549822
+
+  #+BEGIN_SRC sh
+    sacct -j 42219721 -o Elapsed,MaxRSS,MaxVMSize
+  #+END_SRC
+
+  #+RESULTS:
+  |    Elapsed | MaxRSS     | MaxVMSize  |
+  | ---------- | ---------- | ---------- |
+  |   02:14:44 |            |            |
+  |   02:14:44 | 263184K    | 1852440K   |
+
