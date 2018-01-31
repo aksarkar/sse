@@ -23,3 +23,7 @@ def test_finemap(simulate):
   x, y = simulate
   res = sse.wrapper.finemap(x, y)
   assert res.shape == (x.shape[1], 3)
+
+def test_exact_pip(simulate):
+  x, y = simulate
+  res = sse.wrapper.exact_pip(x, y, effect_var=1)

@@ -24,6 +24,27 @@ def dap(x, y, **kwargs):
         return pd.read_table(f, header=None, names=['rank', 'snp', 'pip', 'bf'], sep='\s+').set_index('snp')
   raise RuntimeError('Failed to parse output')
 
+def exact_pip(x, y, effect_var, **kwargs):
+  """Return exact PIP assuming one causal variant
+
+  The PIP of SNP j is proportional to the Bayes factor of SNP j, which we can
+  compute from the marginal MLE (Wakefield Genet Epi 2009).
+
+  Fit linear regression models in parallel using matrix operations (Sikorska et
+  al., BMC Bioinformatics 2013).
+
+  """
+
+  n, p = x.shape
+  var = np.diag(x.T.dot(x)).reshape(-1, 1) + 1e-8  # Needed for monomorphic SNPs
+  beta = y.T.dot(x).T / var
+  df = n - 1
+  s = ((y ** 2).sum() - beta ** 2 * var) / df
+  V = s / var
+  bf = np.sqrt((V + effect_var) / V) * np.exp(-.5 * beta * beta / V * effect_var / (V + effect_var))
+  pip = bf / bf.sum()
+  return pd.DataFrame({'snp': ['snp{}'.format(i) for i in range(p)], 'pip': pip.ravel()}).set_index('snp')
+
 # Dynamically build the list of wrappers for use in sse.evaluate
 methods = [x for x in
            [getattr(sys.modules[__name__], y) for y in dir(sys.modules[__name__])]
