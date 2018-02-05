@@ -26,7 +26,8 @@ def _read_data(row, genotype_files, window):
 
   x = read_vcf(genotype_files, int(row['chr'][2:]), start, end).T
   x = np.ma.masked_equal(x, -1)
-  x = x.filled(x.mean())
+  x -= x.mean(axis=0)
+  x = x.filled(0)
   return x
 
 def _generate_pheno(trial, x, num_causal):
@@ -34,6 +35,7 @@ def _generate_pheno(trial, x, num_causal):
   s.estimate_mafs(x)
   s.sample_effects(pve=0.15, annotation_params=[(num_causal, 1)], permute=True)
   y = s.compute_liabilities(x).reshape(-1, 1)
+  y -= y.mean()
   return s, y
 
 def max_abs_error(trial, row, genotype_files, num_causal=1, window=int(1e5), **kwargs):
@@ -50,6 +52,8 @@ def max_abs_error(trial, row, genotype_files, num_causal=1, window=int(1e5), **k
   """
   x = _read_data(row, genotype_files, window)
   s, y = _generate_pheno(trial, x, num_causal=num_causal)
+  x /= x.std(axis=0) + 1e-8
+  y /= y.std()
   m = sse.model.GaussianSSE().fit(x, y, **kwargs)
   sse_pip = m.pip_df.apply(lambda x: 1 - np.prod(1 - x), axis=1)
   assert sse_pip.apply(lambda x: 0 <= x <= 1).all()
