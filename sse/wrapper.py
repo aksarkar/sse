@@ -5,6 +5,7 @@ import os
 import pandas as pd
 import tempfile
 import types
+import scipy.special as spsp
 import sse
 import subprocess
 import sys
@@ -24,7 +25,7 @@ def dap(x, y, **kwargs):
         return pd.read_table(f, header=None, names=['rank', 'snp', 'pip', 'bf'], sep='\s+').set_index('snp')
   raise RuntimeError('Failed to parse output')
 
-def exact_pip(x, y, effect_var, **kwargs):
+def exact_pip(x, y, effect_var=1, **kwargs):
   """Return exact PIP assuming one causal variant
 
   The PIP of SNP j is proportional to the Bayes factor of SNP j, which we can
@@ -34,15 +35,19 @@ def exact_pip(x, y, effect_var, **kwargs):
   al., BMC Bioinformatics 2013).
 
   """
-
   n, p = x.shape
-  var = np.diag(x.T.dot(x)).reshape(-1, 1) + 1e-8  # Needed for monomorphic SNPs
+  # Ignore SNPs which are monomorphic
+  var = np.ma.masked_less(np.diag(x.T.dot(x)).reshape(-1, 1), 1e-3)
   beta = y.T.dot(x).T / var
   df = n - 1
-  s = ((y ** 2).sum() - beta ** 2 * var) / df
-  V = s / var
-  bf = np.sqrt((V + effect_var) / V) * np.exp(-.5 * beta * beta / V * effect_var / (V + effect_var))
-  pip = bf / bf.sum()
+  rss = ((y ** 2).sum() - beta ** 2 * var)
+  sigma2 = rss / df
+  V = sigma2 / var
+  # Wakefield uses BF = p(y | M0) / p(y | M1), but we want its reciprocal
+  #
+  # [p(y | j causal) / p(y | none causal)] / sum_j [p(y | j causal) / p(y | none causal)]
+  logbf = -.5 * np.log((V + effect_var) / V) - (-.5 * np.square(beta) / V * effect_var / (V + effect_var))
+  pip = logbf / spsp.logsumexp(logbf.compressed())
   return pd.DataFrame({'snp': ['snp{}'.format(i) for i in range(p)], 'pip': pip.ravel()}).set_index('snp')
 
 # Dynamically build the list of wrappers for use in sse.evaluate
