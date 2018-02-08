@@ -56,7 +56,17 @@ def exact_pip(x, y, effect_var=1, **kwargs):
   pip = logbf / spsp.logsumexp(logbf.compressed())
   return pd.DataFrame({'snp': ['snp{}'.format(i) for i in range(p)], 'pip': pip.ravel()}).set_index('snp')
 
+def sse_10(x, y, **kwargs):
+  """Return SSE PIP assuming 10 causal effects.
+
+  """
+  if 'num_causal' in kwargs:
+    raise ValueError('Cannot specify num_causal for method "sse_10"')
+  m = sse.model.GaussianSSE().fit(x, y, num_effects=10, **kwargs)
+  return pd.DataFrame(m.pip_df.apply(lambda x: 1 - np.prod(1 - x), axis=1), columns=['pip'])
+
 # Dynamically build the list of wrappers for use in sse.evaluate
 methods = [x for x in
            [getattr(sys.modules[__name__], y) for y in dir(sys.modules[__name__])]
            if isinstance(x, types.FunctionType)]
+
