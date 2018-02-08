@@ -11,6 +11,12 @@ import subprocess
 import sys
 
 def dap(x, y, **kwargs):
+  """Return PIP estimated by DAP (Wen et al, Am J Hum Genet 2016)
+
+  Assume no heterogeneity in the samples, and fix the effect size
+  hyperparameter grid to [1].
+
+  """
   with open('data.txt', 'w') as f:
     print(*(['pheno', 'pheno', '0'] + list(y.ravel())), file=f)
     for j in range(x.shape[1]):
