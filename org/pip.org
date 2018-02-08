@@ -13,7 +13,7 @@
   #+CALL: ipython3(mem="4G", venv="sse") :dir /scratch/midway2/aksarkar/sse
 
   #+RESULTS:
-  : Submitted batch job 42634454
+  : Submitted batch job 42923823
 
   #+BEGIN_SRC ipython
     %matplotlib inline
@@ -43,9 +43,19 @@
   Here we compare posterior inclusion probabilities (PIPs) computed using the
   Sum of Single Effects (SSE) variational approximation against other methods:
 
-  - [[http://www.sciencedirect.com/science/article/pii/S0002929716300957?via%253Dihub][DAP]] (2016). We used version 1.0, setting \(\phi = 0\) (no heterogeneity
-    between groups of samples) and \(\omega = 1\) (matching the
+  - Exact PIP estimation using asymptotic Bayes factors ([[http://dx.doi.org/10.1002/gepi.20359][Wakefield et al
+    2009]]). Assuming a single causal variant:
+
+    \[ \mathrm{PIP}_j \propto \frac{p(y \mid j\ \mathrm{causal})}{\sum_j p(y
+    \mid j\ \mathrm{causal})} = \frac{\mathrm{BF}_j}{\sum_j \mathrm{BF}_j} \]
+
+  - DAP ([[http://www.sciencedirect.com/science/article/pii/S0002929716300957?via%253Dihub][Wen et al 2016]]). We used version 1.0, setting \(\phi = 0\) (no
+    heterogeneity between groups of samples) and \(\omega = 1\) (matching the
     simulation). (~sse.wrapper.dap~)
+
+  - SSE assuming 10 causal effects. This is more than the simulated number of
+    causal effects, allowing us to assess the impact of overparameterizing the
+    approximating family.
 
   The simulation generative model is as follows (~sse.evaluate._pip_calibration~):
 
@@ -59,7 +69,7 @@
 
      #+RESULTS: get-genotypes
      :RESULTS:
-     # Out[19]:
+     # Out[3]:
      :END:
 
      #+BEGIN_SRC ipython
@@ -118,7 +128,7 @@
 
      #+RESULTS: read-genes
      :RESULTS:
-     # Out[20]:
+     # Out[4]:
      :END:
 
   2. Extract genotypes of GEUVADIS individuals \(X\) from 100 kilobases
@@ -128,7 +138,10 @@
      /cis/-heritability of gene expression across all genes; [[https://www.nature.com/articles/ng.3506][Gusev et al 2016]],
      [[https://www.nature.com/articles/ng.3506][Wheeler et al 2016]])
   5. Sample causal effects from \(\beta_j \sim N(0, 1)\)
-     (~sse.simulation.Simulation.sample_effects~).
+     (~sse.simulation.Simulation.sample_effects~). 
+
+     Importantly, this scheme assumes that rarer variants have larger effect
+     sizes.
   6. Compute genetic variance \(V_g = \sum_j 2 f_j (1 - f_j) \beta_j^2\)
   7. Sample residuals \(\epsilon_i \sim N(0, V_g (1 / h^2 - 1))\)
   8. Compute phenotypes \(y_i = X_i\beta + \epsilon_i\) (~sse.simulation.Simulation.compute_liabilities~)
@@ -197,7 +210,7 @@
       genotype_files=genotype_files,
       num_genes=100,
       num_trials=1,
-      num_effects=10,
+      num_effects=1,
       seed=0)
     one_causal.to_csv('/home/aksarkar/projects/sse/data/one-causal-max-error.txt.gz', sep='\t', compression='gzip')
   #+END_SRC
@@ -302,7 +315,7 @@
       num_genes=100,
       num_trials=1,
       num_causal=2,
-      num_effects=10,
+      num_effects=2,
       seed=0)
     two_causal.to_csv('/home/aksarkar/projects/sse/data/two-causal-max-error.txt.gz', sep='\t', compression='gzip')
   #+END_SRC
@@ -367,7 +380,7 @@
   [[file:two-causal-maf-effect.png]]
   :END:
 
-* Three causal variants                                            :noexport:
+* Three causal variants
 
   #+BEGIN_SRC ipython :eval never :tangle pip.py
     three_causal = sse.evaluate.pip_calibration(
@@ -450,14 +463,14 @@
   | pip.py |
 
   #+BEGIN_SRC sh
-    sbatch --partition="broadwl" --mem=4G --time=400 --job-name="sse"
+    sbatch --partition="broadwl" --mem=2G --time=600 --job-name=sse --out sse.out --err sse.err
     #!/bin/bash
     source activate sse
     python pip.py
   #+END_SRC
 
   #+RESULTS:
-  : Submitted batch job 42549822
+  : Submitted batch job 43008819
 
   #+BEGIN_SRC sh
     sacct -j 42549822 -o Elapsed,MaxRSS,MaxVMSize
